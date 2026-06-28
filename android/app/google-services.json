@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "308509074128",
+    "firebase_url": "https://aquagas-68f33-default-rtdb.firebaseio.com",
+    "project_id": "aquagas-68f33",
+    "storage_bucket": "aquagas-68f33.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:308509074128:android:c53911d26cef92fa56f4d5",
+        "android_client_info": {
+          "package_name": "com.example.aquagas"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "308509074128-lsc3nj0n8ssmr3i7c2n70u3nunfe0rrt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdKIA_M74PJ-ipJHdV52WRnSDrp6QhSoM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "308509074128-lsc3nj0n8ssmr3i7c2n70u3nunfe0rrt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:308509074128:android:e347eb19c87425c356f4d5",
+        "android_client_info": {
+          "package_name": "com.example.aquagas_admin_panel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "308509074128-lsc3nj0n8ssmr3i7c2n70u3nunfe0rrt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdKIA_M74PJ-ipJHdV52WRnSDrp6QhSoM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "308509074128-lsc3nj0n8ssmr3i7c2n70u3nunfe0rrt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:308509074128:android:779a7ab35876d28256f4d5",
+        "android_client_info": {
+          "package_name": "com.example.vendorapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "308509074128-lsc3nj0n8ssmr3i7c2n70u3nunfe0rrt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdKIA_M74PJ-ipJHdV52WRnSDrp6QhSoM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "308509074128-lsc3nj0n8ssmr3i7c2n70u3nunfe0rrt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
