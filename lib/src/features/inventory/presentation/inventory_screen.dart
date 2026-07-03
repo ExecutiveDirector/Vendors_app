@@ -208,6 +208,115 @@ class _InventoryScreenState extends State<InventoryScreen> {
     }
   }
 
+  Future<void> _showEditPriceDialog(InventoryItem item) async {
+    final ctrl = TextEditingController(text: item.sellingPrice.toStringAsFixed(0));
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          MediaQuery.of(ctx).viewInsets.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Edit Price: ${item.productName}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            if (item.outletName != null)
+              Text(
+                'at ${item.outletName}',
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+            const SizedBox(height: 4),
+            Text(
+              'Current price: KES ${item.sellingPrice.toStringAsFixed(0)}',
+              style: const TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'This is the live price customers pay at this outlet — separate '
+              'from the product\'s catalog reference price.',
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'New selling price',
+                prefixText: 'KES ',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  final price = double.tryParse(ctrl.text);
+                  if (price == null || price <= 0) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      const SnackBar(content: Text('Enter a valid price')),
+                    );
+                    return;
+                  }
+                  Navigator.pop(ctx);
+                  await _applyPriceUpdate(item, price);
+                },
+                child: const Text('Save Price'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _applyPriceUpdate(InventoryItem item, double newPrice) async {
+    try {
+      await InventoryApi.updateItem(item.inventoryId, {
+        'selling_price': newPrice,
+      });
+      await _load();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Price updated to KES ${newPrice.toStringAsFixed(0)}'),
+            backgroundColor: Colors.teal,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   void _showMovements(InventoryItem item) {
     showModalBottomSheet(
       context: context,
@@ -321,6 +430,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                               item: _filtered[i],
                               onAdjust: _showAdjustDialog,
                               onHistory: _showMovements,
+                              onEditPrice: _showEditPriceDialog,
                             ),
                           ),
           ),
@@ -396,10 +506,12 @@ class _InventoryCard extends StatelessWidget {
   final InventoryItem item;
   final void Function(InventoryItem) onAdjust;
   final void Function(InventoryItem) onHistory;
+  final void Function(InventoryItem) onEditPrice;
   const _InventoryCard({
     required this.item,
     required this.onAdjust,
     required this.onHistory,
+    required this.onEditPrice,
   });
 
   @override
@@ -492,10 +604,23 @@ class _InventoryCard extends StatelessWidget {
             // Price + action buttons
             Row(
               children: [
-                Text(
-                  'KES ${item.sellingPrice.toStringAsFixed(0)}',
-                  style:
-                      TextStyle(color: cs.primary, fontWeight: FontWeight.w600),
+                InkWell(
+                  onTap: () => onEditPrice(item),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'KES ${item.sellingPrice.toStringAsFixed(0)}',
+                          style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.edit, size: 13, color: cs.primary.withValues(alpha: 0.6)),
+                      ],
+                    ),
+                  ),
                 ),
                 const Spacer(),
                 TextButton.icon(
