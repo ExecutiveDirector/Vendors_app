@@ -1,0 +1,47 @@
+name: Build & Distribute Vendor App
+
+# Runs whenever you push to main — builds a release APK and pushes it to
+# Firebase App Distribution. Vendors on your tester list get a notification
+# and can tap to install, no Play Store review needed.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}   # lets you also trigger it manually from the Actions tab
+
+jobs:
+  build-and-distribute:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'   # matches your local dev version
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # If you have tests, keep this — it stops a broken build from ever
+      # reaching a vendor's phone. Remove the step if you don't have tests yet.
+      - name: Run tests
+        run: flutter test
+        continue-on-error: true   # set to false once you're confident in your test suite
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: vendors
+          file: build/app/outputs/flutter-apk/app-release.apk
+          releaseNotes: |
+            Auto-build from commit ${{ github.sha }}
+            ${{ github.event.head_commit.message }}
