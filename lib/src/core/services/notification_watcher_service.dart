@@ -35,7 +35,7 @@ class NotificationWatcherService {
   static final NotificationWatcherService instance =
       NotificationWatcherService._();
 
-  static const _pollInterval = Duration(seconds: 30);
+  static const _pollInterval = Duration(seconds: 10);
   static const _lastSeenKey = 'last_seen_notification_id';
 
   Timer? _timer;
