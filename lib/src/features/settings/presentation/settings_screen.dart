@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:app_settings/app_settings.dart';
 
 import '../../../core/services/local_storage.dart';
 import '../../../core/services/push_notification_service.dart';
@@ -19,16 +21,46 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
   Map<String, dynamic>? _profile;
   bool _loading = true;
   String? _error;
   bool _signingOut = false;
 
+  // Live phone notification permission status (Enabled / Disabled / etc.),
+  // fetched from FCM rather than assumed — re-checked whenever the vendor
+  // returns to this screen, since they may have just come back from
+  // toggling it in the phone's system settings.
+  AuthorizationStatus? _notifStatus;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+    _refreshNotificationStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Vendor likely just came back from the phone's Settings app after
+    // tapping the notifications tile — refresh so the status shown is
+    // never stale.
+    if (state == AppLifecycleState.resumed) {
+      _refreshNotificationStatus();
+    }
+  }
+
+  Future<void> _refreshNotificationStatus() async {
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    if (mounted) setState(() => _notifStatus = settings.authorizationStatus);
   }
 
   Future<void> _load() async {
@@ -254,19 +286,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildNotificationsTile(ColorScheme cs) {
+    final (label, color) = switch (_notifStatus) {
+      AuthorizationStatus.authorized || AuthorizationStatus.provisional =>
+        ('Enabled', Colors.green[700]!),
+      AuthorizationStatus.denied => ('Disabled', Colors.red[700]!),
+      AuthorizationStatus.notDetermined => ('Not set up yet', Colors.grey[600]!),
+      _ => ('Checking…', Colors.grey[600]!),
+    };
     return ListTile(
       leading: Icon(Icons.notifications_outlined, color: cs.primary),
       title: const Text('Push Notifications'),
-      subtitle: const Text(
-          'Manage notification permissions in your phone\'s system settings'),
+      subtitle: Text(
+        'Status: $label — tap to open phone settings',
+        style: TextStyle(color: color, fontWeight: FontWeight.w600),
+      ),
       trailing: const Icon(Icons.open_in_new, size: 16),
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Open your phone\'s Settings app → Apps → AquaGas Vendor → Notifications'),
-          ),
-        );
+      onTap: () async {
+        await AppSettings.openAppSettings(type: AppSettingsType.notification);
+        // The listener in didChangeAppLifecycleState also catches this,
+        // but refresh immediately too in case the OS doesn't fire a
+        // lifecycle event on this particular device.
+        _refreshNotificationStatus();
       },
     );
   }
