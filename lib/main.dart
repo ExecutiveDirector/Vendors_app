@@ -5,6 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'src/core/bootstrap.dart';
 import 'src/core/theme.dart';
 import 'src/core/services/push_notification_service.dart';
+import 'src/core/services/notification_watcher_service.dart';
+import 'src/core/services/local_storage.dart';
 // Contains real Android config values extracted from
 // android/app/google-services.json. Does NOT cover iOS or web — see the
 // comment inside that file for how to add those via `flutterfire configure`
@@ -52,6 +54,16 @@ Future<void> main() async {
   ));
 
   await bootstrap();
+
+  // If the vendor is already logged in from a previous session, start
+  // listening for notifications right away rather than waiting for them
+  // to hit the Notifications screen. On a fresh login, this is instead
+  // kicked off from login_screen.dart once a token is issued.
+  final existingToken = await LocalStorage.getToken();
+  if (existingToken != null) {
+    NotificationWatcherService.instance.start();
+  }
+
   runApp(const VendorApp());
 }
 

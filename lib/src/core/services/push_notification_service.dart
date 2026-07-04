@@ -37,6 +37,39 @@ const String _ordersChannelDescription =
 final FlutterLocalNotificationsPlugin _localNotifications =
     FlutterLocalNotificationsPlugin();
 
+/// One Android notification channel per backend `notification_type`
+/// (matches the types used in NotificationsScreen / the
+/// GET /vendors/notifications payload), so EVERY notification the vendor
+/// gets — not just "new paid order" pushes from FCM — rings/vibrates the
+/// phone the same way a normal push notification would.
+///
+/// 'order_update' intentionally reuses the pre-existing `orders` channel id
+/// so it still lines up with AndroidManifest.xml's
+/// com.google.firebase.messaging.default_notification_channel_id.
+class _NotificationChannel {
+  final String id;
+  final String name;
+  final String description;
+  const _NotificationChannel(this.id, this.name, this.description);
+}
+
+const Map<String, _NotificationChannel> _channelsByType = {
+  'order_update': _NotificationChannel(
+      _ordersChannelId, _ordersChannelName, _ordersChannelDescription),
+  'delivery_update': _NotificationChannel(
+      'delivery_updates', 'Delivery Updates', 'Updates about order deliveries'),
+  'payment_update': _NotificationChannel(
+      'payment_updates', 'Payment Updates', 'Updates about payments and payouts'),
+  'promotional': _NotificationChannel(
+      'promotions', 'Promotions', 'Promotional offers and announcements'),
+  'system_alert': _NotificationChannel(
+      'system_alerts', 'System Alerts', 'Important system alerts'),
+  'reminder': _NotificationChannel(
+      'reminders', 'Reminders', 'Reminders that need your attention'),
+};
+const _NotificationChannel _defaultChannel =
+    _NotificationChannel('general', 'General', 'Other app notifications');
+
 /// MUST be a top-level function (not a class method, not a closure) —
 /// this is a hard requirement of firebase_messaging's background handler,
 /// because it runs in a separate isolate when the app is killed.
@@ -93,17 +126,18 @@ class PushNotificationService {
     );
 
     if (Platform.isAndroid) {
-      const channel = AndroidNotificationChannel(
-        _ordersChannelId,
-        _ordersChannelName,
-        description: _ordersChannelDescription,
-        importance: Importance.max,
-        playSound: true,
-      );
-      await _localNotifications
+      final androidImpl = _localNotifications
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(channel);
+              AndroidFlutterLocalNotificationsPlugin>();
+      for (final ch in [..._channelsByType.values, _defaultChannel]) {
+        await androidImpl?.createNotificationChannel(AndroidNotificationChannel(
+          ch.id,
+          ch.name,
+          description: ch.description,
+          importance: Importance.max,
+          playSound: true,
+        ));
+      }
     }
   }
 
@@ -111,20 +145,46 @@ class PushNotificationService {
     final notification = message.notification;
     if (notification == null) return;
 
+    // This FCM channel is currently only used for "new paid order" pushes
+    // (see file header), so default the type accordingly if the payload
+    // doesn't say otherwise.
+    showLocalNotification(
+      id: message.hashCode,
+      title: notification.title ?? 'New notification',
+      body: notification.body ?? '',
+      type: message.data['type'] as String? ?? 'order_update',
+    );
+  }
+
+  /// Shows a native phone notification (system tray entry + sound) for ANY
+  /// notification in the app — order updates, delivery updates, payment
+  /// updates, promotions, system alerts, reminders, etc. — not just the
+  /// "new paid order" pushes FCM delivers. Call this from anywhere a
+  /// notification is surfaced to the vendor (e.g. NotificationWatcherService
+  /// after polling GET /vendors/notifications) so it's always heard, whether
+  /// it arrived via push or was picked up from the in-app notifications
+  /// list.
+  static void showLocalNotification({
+    required int id,
+    required String title,
+    required String body,
+    String type = 'system_alert',
+  }) {
+    final channel = _channelsByType[type] ?? _defaultChannel;
     _localNotifications.show(
-      message.hashCode,
-      notification.title,
-      notification.body,
-      const NotificationDetails(
+      id,
+      title,
+      body,
+      NotificationDetails(
         android: AndroidNotificationDetails(
-          _ordersChannelId,
-          _ordersChannelName,
-          channelDescription: _ordersChannelDescription,
+          channel.id,
+          channel.name,
+          channelDescription: channel.description,
           importance: Importance.max,
           priority: Priority.max,
           playSound: true,
         ),
-        iOS: DarwinNotificationDetails(presentSound: true),
+        iOS: const DarwinNotificationDetails(presentSound: true),
       ),
     );
   }

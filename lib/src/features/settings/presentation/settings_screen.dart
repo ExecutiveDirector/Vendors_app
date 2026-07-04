@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/services/local_storage.dart';
 import '../../../core/services/push_notification_service.dart';
+import '../../../core/services/notification_watcher_service.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../auth/data/auth_api.dart';
 
@@ -106,6 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await VendorAuthApi.logout();
     } catch (_) {}
 
+    NotificationWatcherService.instance.reset();
     await LocalStorage.clearAll();
 
     if (mounted) context.go('/login');

@@ -14,11 +14,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/widgets/shared_widgets.dart';
+import '../../../core/services/notification_watcher_service.dart'
+    show notificationUnreadCount;
 
-// ─── Global unread count — listen from anywhere (e.g. dashboard badge) ───────
-/// ValueNotifier<int> that holds the current unread notification count.
-/// Subscribe with ValueListenableBuilder wherever you need a badge.
-final notificationUnreadCount = ValueNotifier<int>(0);
+// notificationUnreadCount now lives in NotificationWatcherService so it
+// stays accurate app-wide (including firing native phone notifications for
+// new items) even when this screen has never been opened — re-exported
+// here so existing imports of this file (e.g. the dashboard) keep working.
+export '../../../core/services/notification_watcher_service.dart'
+    show notificationUnreadCount;
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});

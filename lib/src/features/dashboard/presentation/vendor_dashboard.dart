@@ -14,6 +14,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/services/local_storage.dart';
 import '../../../core/services/push_notification_service.dart';
+import '../../../core/services/notification_watcher_service.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../notifications/presentation/notifications_screen.dart'
     show notificationUnreadCount;
@@ -110,6 +111,7 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
     // Must run BEFORE clearAll() — needs the still-present auth token to
     // authenticate the unregister request. Best-effort.
     await PushNotificationService.unregisterToken();
+    NotificationWatcherService.instance.reset();
     await LocalStorage.clearAll();
     if (mounted) context.go('/login');
   }
