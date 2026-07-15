@@ -211,6 +211,12 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                           onTap: () => context.push('/inventory'),
                         ),
                         _QuickAction(
+                          icon: Icons.sync_rounded,
+                          label: 'Wholesaler Sync',
+                          color: const Color(0xFF10B981),
+                          onTap: () => context.push('/wholesaler-sync'),
+                        ),
+                        _QuickAction(
                           icon: Icons.storefront_rounded,
                           label: 'Outlets',
                           color: const Color(0xFFF59E0B),

@@ -28,6 +28,7 @@ import '../features/settings/presentation/settings_screen.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
 import '../features/subscriptions/presentation/subscriptions_screen.dart';
 import '../features/tracking/presentation/track_order_screen.dart';
+import '../features/wholesaler_sync/presentation/wholesaler_sync_screen.dart';
 
 // ─── Simple token check (no network call — avoids logout on bad connectivity) ─
 Future<String?> _authRedirect(BuildContext ctx, GoRouterState state) async {
@@ -110,6 +111,9 @@ GoRouter createRouter() => GoRouter(
         GoRoute(path: '/products', builder: (c, s) => const ProductsScreen()),
         GoRoute(
             path: '/inventory', builder: (c, s) => const InventoryScreen()),
+        GoRoute(
+            path: '/wholesaler-sync',
+            builder: (c, s) => const WholesalerSyncScreen()),
         GoRoute(path: '/outlets', builder: (c, s) => const OutletsScreen()),
         GoRoute(path: '/riders', builder: (c, s) => const RidersScreen()),
         GoRoute(
