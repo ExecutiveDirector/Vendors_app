@@ -1,0 +1,811 @@
+diff --git a/lib/src/core/router.dart b/lib/src/core/router.dart
+index 8f8f6a0..1c35018 100644
+--- a/lib/src/core/router.dart
++++ b/lib/src/core/router.dart
+@@ -28,6 +28,7 @@ import '../features/settings/presentation/settings_screen.dart';
+ import '../features/transactions/presentation/transactions_screen.dart';
+ import '../features/subscriptions/presentation/subscriptions_screen.dart';
+ import '../features/tracking/presentation/track_order_screen.dart';
++import '../features/wholesaler_sync/presentation/wholesaler_sync_screen.dart';
+ 
+ // ─── Simple token check (no network call — avoids logout on bad connectivity) ─
+ Future<String?> _authRedirect(BuildContext ctx, GoRouterState state) async {
+@@ -110,6 +111,9 @@ GoRouter createRouter() => GoRouter(
+         GoRoute(path: '/products', builder: (c, s) => const ProductsScreen()),
+         GoRoute(
+             path: '/inventory', builder: (c, s) => const InventoryScreen()),
++        GoRoute(
++            path: '/wholesaler-sync',
++            builder: (c, s) => const WholesalerSyncScreen()),
+         GoRoute(path: '/outlets', builder: (c, s) => const OutletsScreen()),
+         GoRoute(path: '/riders', builder: (c, s) => const RidersScreen()),
+         GoRoute(
+diff --git a/lib/src/features/dashboard/presentation/vendor_dashboard.dart b/lib/src/features/dashboard/presentation/vendor_dashboard.dart
+index 3ead229..d7973b4 100644
+--- a/lib/src/features/dashboard/presentation/vendor_dashboard.dart
++++ b/lib/src/features/dashboard/presentation/vendor_dashboard.dart
+@@ -210,6 +210,12 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
+                           color: const Color(0xFF8B5CF6),
+                           onTap: () => context.push('/inventory'),
+                         ),
++                        _QuickAction(
++                          icon: Icons.sync_rounded,
++                          label: 'Wholesaler Sync',
++                          color: const Color(0xFF10B981),
++                          onTap: () => context.push('/wholesaler-sync'),
++                        ),
+                         _QuickAction(
+                           icon: Icons.storefront_rounded,
+                           label: 'Outlets',
+diff --git a/lib/src/features/wholesaler_sync/data/wholesaler_sync_models.dart b/lib/src/features/wholesaler_sync/data/wholesaler_sync_models.dart
+new file mode 100644
+index 0000000..473ab31
+--- /dev/null
++++ b/lib/src/features/wholesaler_sync/data/wholesaler_sync_models.dart
+@@ -0,0 +1,115 @@
++// lib/src/features/wholesaler_sync/data/wholesaler_sync_models.dart
++
++class WholesalerSource {
++  final String sourceId;
++  final String whatsappGroupJid;
++  final String? sourceLabel;
++  final String? wholesalerName;
++  final bool autoApplyKnownProducts;
++  final String status; // active | paused | disconnected
++  final String? lastMessageAt;
++
++  WholesalerSource({
++    required this.sourceId,
++    required this.whatsappGroupJid,
++    this.sourceLabel,
++    this.wholesalerName,
++    required this.autoApplyKnownProducts,
++    required this.status,
++    this.lastMessageAt,
++  });
++
++  factory WholesalerSource.fromJson(Map<String, dynamic> json) {
++    return WholesalerSource(
++      sourceId: json['source_id'].toString(),
++      whatsappGroupJid: json['whatsapp_group_jid'] as String,
++      sourceLabel: json['source_label'] as String?,
++      wholesalerName: json['wholesaler_name'] as String?,
++      autoApplyKnownProducts: json['auto_apply_known_products'] == true ||
++          json['auto_apply_known_products'] == 1,
++      status: json['status'] as String? ?? 'disconnected',
++      lastMessageAt: json['last_message_at']?.toString(),
++    );
++  }
++}
++
++class CatalogStagingItem {
++  final String stagingId;
++  final String extractedName;
++  final String? extractedUnit;
++  final String? extractedSize;
++  final double wholesaleCost;
++  final int? suggestedCategoryId;
++  final String? suggestedCategoryName;
++  final String? matchedProductId;
++  final String? matchedProductName;
++  final double? matchConfidence;
++  final String matchType; // exact | fuzzy | llm_assisted | none
++  final double? computedRetailPrice;
++  final String status; // pending_review | auto_applied | approved | rejected
++  final String? reviewReason;
++
++  bool get isNewProduct => matchedProductId == null;
++
++  CatalogStagingItem({
++    required this.stagingId,
++    required this.extractedName,
++    this.extractedUnit,
++    this.extractedSize,
++    required this.wholesaleCost,
++    this.suggestedCategoryId,
++    this.suggestedCategoryName,
++    this.matchedProductId,
++    this.matchedProductName,
++    this.matchConfidence,
++    required this.matchType,
++    this.computedRetailPrice,
++    required this.status,
++    this.reviewReason,
++  });
++
++  factory CatalogStagingItem.fromJson(Map<String, dynamic> json) {
++    return CatalogStagingItem(
++      stagingId: json['staging_id'].toString(),
++      extractedName: json['extracted_name'] as String,
++      extractedUnit: json['extracted_unit'] as String?,
++      extractedSize: json['extracted_size'] as String?,
++      wholesaleCost: double.tryParse(json['wholesale_cost'].toString()) ?? 0,
++      suggestedCategoryId: json['suggested_category_id'] as int?,
++      suggestedCategoryName:
++          (json['suggested_category'] as Map<String, dynamic>?)?['category_name']
++              as String?,
++      matchedProductId: json['matched_product_id']?.toString(),
++      matchedProductName:
++          (json['matched_product'] as Map<String, dynamic>?)?['product_name']
++              as String?,
++      matchConfidence: json['match_confidence'] != null
++          ? double.tryParse(json['match_confidence'].toString())
++          : null,
++      matchType: json['match_type'] as String? ?? 'none',
++      computedRetailPrice: json['computed_retail_price'] != null
++          ? double.tryParse(json['computed_retail_price'].toString())
++          : null,
++      status: json['status'] as String? ?? 'pending_review',
++      reviewReason: json['review_reason'] as String?,
++    );
++  }
++
++  /// Human-friendly explanation of why this needs a manual look.
++  String get friendlyReviewReason {
++    switch (reviewReason) {
++      case 'new_or_unmatched_product':
++        return "Couldn't confidently match an existing product";
++      case 'auto_apply_disabled_for_source':
++        return 'Auto-apply is off for this WhatsApp group';
++      default:
++        if (reviewReason?.startsWith('price_jump_over_') == true) {
++          final pct = reviewReason!
++              .replaceAll('price_jump_over_', '')
++              .replaceAll('pct', '');
++          return 'Wholesale price jumped more than $pct% — check for a typo';
++        }
++        return reviewReason ?? '';
++    }
++  }
++}
+diff --git a/lib/src/features/wholesaler_sync/data/wholesaler_sync_service.dart b/lib/src/features/wholesaler_sync/data/wholesaler_sync_service.dart
+new file mode 100644
+index 0000000..a78a197
+--- /dev/null
++++ b/lib/src/features/wholesaler_sync/data/wholesaler_sync_service.dart
+@@ -0,0 +1,144 @@
++// lib/src/features/wholesaler_sync/data/wholesaler_sync_service.dart
++//
++// Vendor self-service API calls for the WhatsApp wholesaler -> catalog
++// automation. Endpoint map (see backend routes/catalogStaging.js):
++//   GET    /vendors/wholesaler-sources
++//   POST   /vendors/wholesaler-sources
++//   PATCH  /vendors/wholesaler-sources/:sourceId
++//   GET    /vendors/catalog-staging?status=pending_review
++//   POST   /vendors/catalog-staging/:stagingId/approve
++//   POST   /vendors/catalog-staging/:stagingId/reject
++//
++// Mirrors the style of ../../inventory/presentation/inventory_service.dart
++// (plain service class over ApiClient.dio, defensive response unwrapping,
++// friendly error messages).
++
++import 'dart:convert';
++import 'package:dio/dio.dart';
++import '../../../core/api/dio_client.dart';
++import 'wholesaler_sync_models.dart';
++
++class WholesalerSyncService {
++  final Dio _dio = ApiClient.dio;
++
++  // ── Sources ──────────────────────────────────────────────────────────────
++
++  Future<List<WholesalerSource>> fetchSources() async {
++    try {
++      final res = await _dio.get('/vendors/wholesaler-sources');
++      final raw = _unwrap(res.data);
++      return (raw as List)
++          .map((e) => WholesalerSource.fromJson(e as Map<String, dynamic>))
++          .toList();
++    } on DioException catch (e) {
++      throw _friendlyError('load WhatsApp sources', e);
++    }
++  }
++
++  Future<WholesalerSource> createSource({
++    required String whatsappGroupJid,
++    String? sourceLabel,
++    String? wholesalerName,
++    String? outletId,
++    bool autoApplyKnownProducts = true,
++  }) async {
++    try {
++      final res = await _dio.post('/vendors/wholesaler-sources', data: {
++        'whatsapp_group_jid': whatsappGroupJid,
++        if (sourceLabel != null) 'source_label': sourceLabel,
++        if (wholesalerName != null) 'wholesaler_name': wholesalerName,
++        if (outletId != null) 'outlet_id': outletId,
++        'auto_apply_known_products': autoApplyKnownProducts,
++      });
++      return WholesalerSource.fromJson(_unwrap(res.data) as Map<String, dynamic>);
++    } on DioException catch (e) {
++      throw _friendlyError('register WhatsApp group', e);
++    }
++  }
++
++  Future<void> updateSource(
++    String sourceId, {
++    String? status,
++    bool? autoApplyKnownProducts,
++  }) async {
++    try {
++      await _dio.patch('/vendors/wholesaler-sources/$sourceId', data: {
++        if (status != null) 'status': status,
++        if (autoApplyKnownProducts != null)
++          'auto_apply_known_products': autoApplyKnownProducts,
++      });
++    } on DioException catch (e) {
++      throw _friendlyError('update WhatsApp source', e);
++    }
++  }
++
++  // ── Review queue ─────────────────────────────────────────────────────────
++
++  Future<List<CatalogStagingItem>> fetchStagingItems({
++    String status = 'pending_review',
++  }) async {
++    try {
++      final res = await _dio.get(
++        '/vendors/catalog-staging',
++        queryParameters: {'status': status},
++      );
++      final raw = _unwrap(res.data);
++      return (raw as List)
++          .map((e) => CatalogStagingItem.fromJson(e as Map<String, dynamic>))
++          .toList();
++    } on DioException catch (e) {
++      throw _friendlyError('load review queue', e);
++    }
++  }
++
++  /// Approve a staged item — publishes it to the live catalog.
++  /// For brand-new products, pass [categoryId] to confirm/correct the
++  /// suggested category, and optionally [marginPctOverride] to override the
++  /// category's default margin for this one item.
++  Future<void> approveStagingItem(
++    String stagingId, {
++    int? categoryId,
++    double? marginPctOverride,
++    String? outletId,
++  }) async {
++    try {
++      await _dio.post('/vendors/catalog-staging/$stagingId/approve', data: {
++        if (categoryId != null) 'category_id': categoryId,
++        if (marginPctOverride != null) 'margin_pct_override': marginPctOverride,
++        if (outletId != null) 'outlet_id': outletId,
++      });
++    } on DioException catch (e) {
++      throw _friendlyError('approve item', e);
++    }
++  }
++
++  Future<void> rejectStagingItem(String stagingId) async {
++    try {
++      await _dio.post('/vendors/catalog-staging/$stagingId/reject');
++    } on DioException catch (e) {
++      throw _friendlyError('reject item', e);
++    }
++  }
++
++  // ── Helpers ──────────────────────────────────────────────────────────────
++
++  dynamic _unwrap(dynamic raw) {
++    if (raw is String) {
++      try {
++        raw = jsonDecode(raw);
++      } catch (_) {}
++    }
++    if (raw is Map && raw.containsKey('data')) return raw['data'];
++    return raw;
++  }
++
++  String _friendlyError(String op, DioException e) {
++    final status = e.response?.statusCode;
++    final msg = e.response?.data is Map
++        ? e.response!.data['message'] ?? e.response!.data['error']
++        : null;
++    if (msg != null) return 'Failed to $op: $msg';
++    if (status != null) return 'Failed to $op (HTTP $status)';
++    return 'Failed to $op: ${e.message}';
++  }
++}
+diff --git a/lib/src/features/wholesaler_sync/presentation/wholesaler_sync_screen.dart b/lib/src/features/wholesaler_sync/presentation/wholesaler_sync_screen.dart
+new file mode 100644
+index 0000000..5217598
+--- /dev/null
++++ b/lib/src/features/wholesaler_sync/presentation/wholesaler_sync_screen.dart
+@@ -0,0 +1,495 @@
++// lib/src/features/wholesaler_sync/presentation/wholesaler_sync_screen.dart
++//
++// Vendor-facing screen for the WhatsApp wholesaler -> catalog automation:
++//   - "Review Queue" tab: approve/reject items the pipeline couldn't
++//     confidently auto-apply (new products, big price jumps, low-confidence
++//     matches).
++//   - "WhatsApp Sources" tab: register/pause the WhatsApp groups that feed
++//     this vendor's catalog.
++
++import 'package:flutter/material.dart';
++import '../data/wholesaler_sync_models.dart';
++import '../data/wholesaler_sync_service.dart';
++
++class WholesalerSyncScreen extends StatefulWidget {
++  const WholesalerSyncScreen({super.key});
++
++  @override
++  State<WholesalerSyncScreen> createState() => _WholesalerSyncScreenState();
++}
++
++class _WholesalerSyncScreenState extends State<WholesalerSyncScreen>
++    with SingleTickerProviderStateMixin {
++  late final TabController _tabController;
++  final _service = WholesalerSyncService();
++
++  @override
++  void initState() {
++    super.initState();
++    _tabController = TabController(length: 2, vsync: this);
++  }
++
++  @override
++  void dispose() {
++    _tabController.dispose();
++    super.dispose();
++  }
++
++  @override
++  Widget build(BuildContext context) {
++    return Scaffold(
++      appBar: AppBar(
++        title: const Text('Wholesaler Sync'),
++        bottom: TabBar(
++          controller: _tabController,
++          tabs: const [
++            Tab(text: 'Review Queue'),
++            Tab(text: 'WhatsApp Sources'),
++          ],
++        ),
++      ),
++      body: TabBarView(
++        controller: _tabController,
++        children: [
++          _ReviewQueueTab(service: _service),
++          _SourcesTab(service: _service),
++        ],
++      ),
++    );
++  }
++}
++
++// ============================================================================
++// REVIEW QUEUE TAB
++// ============================================================================
++
++class _ReviewQueueTab extends StatefulWidget {
++  final WholesalerSyncService service;
++  const _ReviewQueueTab({required this.service});
++
++  @override
++  State<_ReviewQueueTab> createState() => _ReviewQueueTabState();
++}
++
++class _ReviewQueueTabState extends State<_ReviewQueueTab> {
++  List<CatalogStagingItem> _items = [];
++  bool _loading = true;
++  String? _error;
++  String? _busyId;
++
++  @override
++  void initState() {
++    super.initState();
++    _load();
++  }
++
++  Future<void> _load() async {
++    setState(() {
++      _loading = true;
++      _error = null;
++    });
++    try {
++      final items = await widget.service.fetchStagingItems();
++      if (mounted) setState(() {
++        _items = items;
++        _loading = false;
++      });
++    } catch (e) {
++      if (mounted) setState(() {
++        _error = e.toString();
++        _loading = false;
++      });
++    }
++  }
++
++  Future<void> _approve(CatalogStagingItem item) async {
++    setState(() => _busyId = item.stagingId);
++    try {
++      await widget.service.approveStagingItem(
++        item.stagingId,
++        categoryId: item.suggestedCategoryId,
++      );
++      if (mounted) {
++        setState(() => _items.removeWhere((i) => i.stagingId == item.stagingId));
++        ScaffoldMessenger.of(context).showSnackBar(
++          SnackBar(content: Text('${item.extractedName} published to your catalog')),
++        );
++      }
++    } catch (e) {
++      if (mounted) {
++        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
++      }
++    } finally {
++      if (mounted) setState(() => _busyId = null);
++    }
++  }
++
++  Future<void> _reject(CatalogStagingItem item) async {
++    setState(() => _busyId = item.stagingId);
++    try {
++      await widget.service.rejectStagingItem(item.stagingId);
++      if (mounted) {
++        setState(() => _items.removeWhere((i) => i.stagingId == item.stagingId));
++      }
++    } catch (e) {
++      if (mounted) {
++        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
++      }
++    } finally {
++      if (mounted) setState(() => _busyId = null);
++    }
++  }
++
++  @override
++  Widget build(BuildContext context) {
++    if (_loading) return const Center(child: CircularProgressIndicator());
++    if (_error != null) {
++      return Center(
++        child: Column(
++          mainAxisSize: MainAxisSize.min,
++          children: [
++            Text(_error!, textAlign: TextAlign.center),
++            const SizedBox(height: 12),
++            ElevatedButton(onPressed: _load, child: const Text('Retry')),
++          ],
++        ),
++      );
++    }
++    if (_items.isEmpty) {
++      return RefreshIndicator(
++        onRefresh: _load,
++        child: ListView(
++          children: const [
++            SizedBox(height: 120),
++            Icon(Icons.check_circle_outline, size: 48, color: Colors.grey),
++            SizedBox(height: 12),
++            Center(
++              child: Padding(
++                padding: EdgeInsets.symmetric(horizontal: 32),
++                child: Text(
++                  'Nothing pending review — wholesaler updates either '
++                  'published automatically or haven\'t come in yet.',
++                  textAlign: TextAlign.center,
++                  style: TextStyle(color: Colors.grey),
++                ),
++              ),
++            ),
++          ],
++        ),
++      );
++    }
++
++    return RefreshIndicator(
++      onRefresh: _load,
++      child: ListView.separated(
++        padding: const EdgeInsets.all(12),
++        itemCount: _items.length,
++        separatorBuilder: (_, __) => const SizedBox(height: 8),
++        itemBuilder: (context, i) => _StagingItemCard(
++          item: _items[i],
++          busy: _busyId == _items[i].stagingId,
++          onApprove: () => _approve(_items[i]),
++          onReject: () => _reject(_items[i]),
++        ),
++      ),
++    );
++  }
++}
++
++class _StagingItemCard extends StatelessWidget {
++  final CatalogStagingItem item;
++  final bool busy;
++  final VoidCallback onApprove;
++  final VoidCallback onReject;
++
++  const _StagingItemCard({
++    required this.item,
++    required this.busy,
++    required this.onApprove,
++    required this.onReject,
++  });
++
++  @override
++  Widget build(BuildContext context) {
++    return Card(
++      elevation: 0,
++      shape: RoundedRectangleBorder(
++        borderRadius: BorderRadius.circular(12),
++        side: BorderSide(color: Colors.grey.shade300),
++      ),
++      child: Padding(
++        padding: const EdgeInsets.all(14),
++        child: Column(
++          crossAxisAlignment: CrossAxisAlignment.start,
++          children: [
++            Row(
++              children: [
++                Expanded(
++                  child: Text(
++                    item.extractedName,
++                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
++                  ),
++                ),
++                _Badge(
++                  label: item.isNewProduct
++                      ? 'New product'
++                      : 'Update: ${item.matchedProductName ?? ''}',
++                  color: item.isNewProduct ? Colors.orange : Colors.blue,
++                ),
++              ],
++            ),
++            const SizedBox(height: 4),
++            Text(
++              '${item.extractedSize ?? '—'} · Wholesale cost KES ${item.wholesaleCost.toStringAsFixed(0)}'
++              '${item.computedRetailPrice != null ? ' → Retail KES ${item.computedRetailPrice!.toStringAsFixed(0)}' : ''}',
++              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
++            ),
++            if (item.reviewReason != null) ...[
++              const SizedBox(height: 6),
++              Row(
++                children: [
++                  Icon(Icons.warning_amber_rounded, size: 14, color: Colors.amber.shade800),
++                  const SizedBox(width: 4),
++                  Expanded(
++                    child: Text(
++                      item.friendlyReviewReason,
++                      style: TextStyle(color: Colors.amber.shade800, fontSize: 12),
++                    ),
++                  ),
++                ],
++              ),
++            ],
++            if (item.isNewProduct && item.suggestedCategoryName != null) ...[
++              const SizedBox(height: 6),
++              Text(
++                'Suggested category: ${item.suggestedCategoryName}',
++                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
++              ),
++            ],
++            const SizedBox(height: 10),
++            Row(
++              mainAxisAlignment: MainAxisAlignment.end,
++              children: [
++                TextButton.icon(
++                  onPressed: busy ? null : onReject,
++                  icon: const Icon(Icons.close, size: 18, color: Colors.red),
++                  label: const Text('Reject', style: TextStyle(color: Colors.red)),
++                ),
++                const SizedBox(width: 8),
++                ElevatedButton.icon(
++                  onPressed: busy ? null : onApprove,
++                  icon: busy
++                      ? const SizedBox(
++                          width: 14,
++                          height: 14,
++                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
++                        )
++                      : const Icon(Icons.check, size: 18),
++                  label: const Text('Approve'),
++                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
++                ),
++              ],
++            ),
++          ],
++        ),
++      ),
++    );
++  }
++}
++
++class _Badge extends StatelessWidget {
++  final String label;
++  final Color color;
++  const _Badge({required this.label, required this.color});
++
++  @override
++  Widget build(BuildContext context) {
++    return Container(
++      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
++      decoration: BoxDecoration(
++        color: color.withOpacity(0.12),
++        borderRadius: BorderRadius.circular(20),
++      ),
++      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
++    );
++  }
++}
++
++// ============================================================================
++// SOURCES TAB
++// ============================================================================
++
++class _SourcesTab extends StatefulWidget {
++  final WholesalerSyncService service;
++  const _SourcesTab({required this.service});
++
++  @override
++  State<_SourcesTab> createState() => _SourcesTabState();
++}
++
++class _SourcesTabState extends State<_SourcesTab> {
++  List<WholesalerSource> _sources = [];
++  bool _loading = true;
++
++  @override
++  void initState() {
++    super.initState();
++    _load();
++  }
++
++  Future<void> _load() async {
++    setState(() => _loading = true);
++    try {
++      final sources = await widget.service.fetchSources();
++      if (mounted) setState(() {
++        _sources = sources;
++        _loading = false;
++      });
++    } catch (e) {
++      if (mounted) {
++        setState(() => _loading = false);
++        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
++      }
++    }
++  }
++
++  Future<void> _toggleStatus(WholesalerSource source) async {
++    final next = source.status == 'active' ? 'paused' : 'active';
++    try {
++      await widget.service.updateSource(source.sourceId, status: next);
++      _load();
++    } catch (e) {
++      if (mounted) {
++        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
++      }
++    }
++  }
++
++  Future<void> _showAddDialog() async {
++    final jidCtrl = TextEditingController();
++    final labelCtrl = TextEditingController();
++    final wholesalerCtrl = TextEditingController();
++
++    final result = await showDialog<bool>(
++      context: context,
++      builder: (ctx) => AlertDialog(
++        title: const Text('Register WhatsApp Group'),
++        content: SingleChildScrollView(
++          child: Column(
++            mainAxisSize: MainAxisSize.min,
++            children: [
++              TextField(
++                controller: jidCtrl,
++                decoration: const InputDecoration(
++                  labelText: 'WhatsApp Group JID',
++                  hintText: 'e.g. 12345678901234-1234567890@g.us',
++                ),
++              ),
++              const SizedBox(height: 8),
++              TextField(
++                controller: labelCtrl,
++                decoration: const InputDecoration(labelText: 'Label (optional)'),
++              ),
++              const SizedBox(height: 8),
++              TextField(
++                controller: wholesalerCtrl,
++                decoration: const InputDecoration(labelText: 'Wholesaler name (optional)'),
++              ),
++              const SizedBox(height: 8),
++              const Text(
++                'Ask AquaGas support for the group JID if you don\'t have it yet — '
++                'it shows up automatically the first time the group sends a message.',
++                style: TextStyle(fontSize: 12, color: Colors.grey),
++              ),
++            ],
++          ),
++        ),
++        actions: [
++          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
++          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Register')),
++        ],
++      ),
++    );
++
++    if (result == true && jidCtrl.text.trim().isNotEmpty) {
++      try {
++        await widget.service.createSource(
++          whatsappGroupJid: jidCtrl.text.trim(),
++          sourceLabel: labelCtrl.text.trim().isEmpty ? null : labelCtrl.text.trim(),
++          wholesalerName: wholesalerCtrl.text.trim().isEmpty ? null : wholesalerCtrl.text.trim(),
++        );
++        _load();
++      } catch (e) {
++        if (mounted) {
++          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
++        }
++      }
++    }
++  }
++
++  @override
++  Widget build(BuildContext context) {
++    return Scaffold(
++      floatingActionButton: FloatingActionButton.extended(
++        onPressed: _showAddDialog,
++        icon: const Icon(Icons.add),
++        label: const Text('Register group'),
++      ),
++      body: _loading
++          ? const Center(child: CircularProgressIndicator())
++          : _sources.isEmpty
++              ? const Center(
++                  child: Padding(
++                    padding: EdgeInsets.all(32),
++                    child: Text(
++                      'No WhatsApp groups registered yet. Tap "Register group" to '
++                      'connect a wholesaler price-list group.',
++                      textAlign: TextAlign.center,
++                      style: TextStyle(color: Colors.grey),
++                    ),
++                  ),
++                )
++              : RefreshIndicator(
++                  onRefresh: _load,
++                  child: ListView.separated(
++                    padding: const EdgeInsets.all(12),
++                    itemCount: _sources.length,
++                    separatorBuilder: (_, __) => const SizedBox(height: 8),
++                    itemBuilder: (context, i) {
++                      final s = _sources[i];
++                      return Card(
++                        elevation: 0,
++                        shape: RoundedRectangleBorder(
++                          borderRadius: BorderRadius.circular(12),
++                          side: BorderSide(color: Colors.grey.shade300),
++                        ),
++                        child: ListTile(
++                          title: Text(s.sourceLabel ?? s.whatsappGroupJid),
++                          subtitle: Text(
++                            '${s.wholesalerName ?? ''}\n${s.whatsappGroupJid}',
++                          ),
++                          isThreeLine: true,
++                          trailing: Column(
++                            mainAxisAlignment: MainAxisAlignment.center,
++                            children: [
++                              _Badge(
++                                label: s.status,
++                                color: s.status == 'active' ? Colors.green : Colors.grey,
++                              ),
++                              IconButton(
++                                icon: Icon(
++                                  s.status == 'active' ? Icons.pause : Icons.play_arrow,
++                                  size: 20,
++                                ),
++                                onPressed: () => _toggleStatus(s),
++                              ),
++                            ],
++                          ),
++                        ),
++                      );
++                    },
++                  ),
++                ),
++    );
++  }
++}
