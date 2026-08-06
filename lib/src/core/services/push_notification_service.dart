@@ -24,6 +24,7 @@
 // in (once an auth token exists, since the registration call needs one).
 
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -130,12 +131,20 @@ class PushNotificationService {
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
       for (final ch in [..._channelsByType.values, _defaultChannel]) {
+        final isOrdersChannel = ch.id == _ordersChannelId;
         await androidImpl?.createNotificationChannel(AndroidNotificationChannel(
           ch.id,
           ch.name,
           description: ch.description,
           importance: Importance.max,
           playSound: true,
+          audioAttributesUsage: isOrdersChannel
+              ? AudioAttributesUsage.alarm
+              : AudioAttributesUsage.notification,
+          enableVibration: true,
+          vibrationPattern: isOrdersChannel
+              ? Int64List.fromList([0, 800, 400, 800, 400, 800, 400, 800])
+              : null,
         ));
       }
     }
@@ -156,6 +165,12 @@ class PushNotificationService {
     );
   }
 
+  /// Same event can legitimately reach this method from two independent
+  /// paths for a new paid order: FCM foreground messages and the notifications
+  /// poller. The dedupe map prevents duplicate sounds and shade entries.
+  static final Map<String, DateTime> _recentlyShown = {};
+  static const _dedupeWindow = Duration(seconds: 20);
+
   /// Shows a native phone notification (system tray entry + sound) for ANY
   /// notification in the app — order updates, delivery updates, payment
   /// updates, promotions, system alerts, reminders, etc. — not just the
@@ -170,7 +185,17 @@ class PushNotificationService {
     required String body,
     String type = 'system_alert',
   }) {
+    final signature = '$type|$title|$body';
+    final now = DateTime.now();
+    final lastShown = _recentlyShown[signature];
+    if (lastShown != null && now.difference(lastShown) < _dedupeWindow) {
+      return;
+    }
+    _recentlyShown[signature] = now;
+    _recentlyShown.removeWhere((_, shownAt) => now.difference(shownAt) > _dedupeWindow);
+
     final channel = _channelsByType[type] ?? _defaultChannel;
+    final isOrderAlert = channel.id == _ordersChannelId;
     _localNotifications.show(
       id,
       title,
@@ -183,8 +208,22 @@ class PushNotificationService {
           importance: Importance.max,
           priority: Priority.max,
           playSound: true,
+          audioAttributesUsage: isOrderAlert
+              ? AudioAttributesUsage.alarm
+              : AudioAttributesUsage.notification,
+          enableVibration: true,
+          vibrationPattern: isOrderAlert
+              ? Int64List.fromList([0, 800, 400, 800, 400, 800, 400, 800])
+              : null,
+          fullScreenIntent: isOrderAlert,
+          category: isOrderAlert ? AndroidNotificationCategory.alarm : null,
         ),
-        iOS: const DarwinNotificationDetails(presentSound: true),
+        iOS: DarwinNotificationDetails(
+          presentSound: true,
+          interruptionLevel: isOrderAlert
+              ? InterruptionLevel.timeSensitive
+              : InterruptionLevel.active,
+        ),
       ),
     );
   }

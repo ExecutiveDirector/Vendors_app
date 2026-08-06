@@ -24,6 +24,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Future<void> _load() async {
     try {
       final summary = await AnalyticsApi.summary();
+      if (!mounted) return;
 
       setState(() {
         _summary = summary;
@@ -31,6 +32,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         _error = null;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;

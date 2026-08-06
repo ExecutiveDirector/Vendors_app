@@ -7,6 +7,7 @@
          requests this at runtime via FirebaseMessaging.instance.requestPermission(),
          but the manifest entry is also required. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
 
     <application
         android:label="vendor"
