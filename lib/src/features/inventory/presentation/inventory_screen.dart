@@ -76,6 +76,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
     String reason = 'manual';
     bool adding = true;
 
+    // try/finally so ctrl is disposed however the sheet closes (Apply,
+    // swipe-to-dismiss, back button) — previously leaked one controller
+    // per dialog open, which adds up over a vendor's shift.
+    try {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -179,6 +183,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ),
       ),
     );
+    } finally {
+      ctrl.dispose();
+    }
   }
 
   Future<void> _applyAdjust(
@@ -211,6 +218,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Future<void> _showEditPriceDialog(InventoryItem item) async {
     final ctrl = TextEditingController(text: item.sellingPrice.toStringAsFixed(0));
 
+    try {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -292,6 +300,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ),
       ),
     );
+    } finally {
+      ctrl.dispose();
+    }
   }
 
   Future<void> _applyPriceUpdate(InventoryItem item, double newPrice) async {

@@ -35,17 +35,22 @@ class _OutletsScreenState extends State<OutletsScreen> {
       final List list =
           data is List ? data : (data['outlets'] ?? data['data'] ?? []);
 
+      // Vendor may have navigated away while this request was in flight —
+      // calling setState on an unmounted State throws and crashes the app.
+      if (!mounted) return;
       setState(() {
         _outlets = list
             .map((o) => VendorOutlet.fromJson(o as Map<String, dynamic>))
             .toList();
       });
     } on DioException catch (e) {
+      if (!mounted) return;
       setState(() => _error = _formatDioError(e));
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = 'Unexpected error: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -201,7 +206,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
         onRefresh: () async {
           setState(() => _isRefreshing = true);
           await _loadOutlets();
-          setState(() => _isRefreshing = false);
+          if (mounted) setState(() => _isRefreshing = false);
         },
         child: _buildOutletsList(),
       ),

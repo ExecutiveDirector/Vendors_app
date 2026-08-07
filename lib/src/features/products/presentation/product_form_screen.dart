@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
 import '../data/product_model.dart';
@@ -39,10 +39,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   bool _loading = true;
 
   // ── Image upload state ──────────────────────────────────────────────────
+  // All photos currently on the product, in display order — a mix of URLs
+  // that existed before this screen opened (edit mode) and ones uploaded
+  // during this session. This is the single source of truth sent on save,
+  // so removing a photo here actually persists the removal instead of the
+  // previous single-photo field silently discarding everything else.
   final _imagePicker = ImagePickerService();
-  XFile? _pickedImage; // local file just chosen, not yet uploaded
-  String? _uploadedImageUrl; // URL returned by server after upload
-  String? _existingImageUrl; // image already on the product (edit mode)
+  final List<String> _imageUrls = [];
   bool _uploadingImage = false;
 
   bool get _isEdit => widget.product != null;
@@ -61,27 +64,40 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _selectedCategory = p?.categoryId;
     _isActive = p?.isActive ?? true;
     _isFeatured = p?.isFeatured ?? false;
-    _existingImageUrl = _extractFirstImageUrl(p?.productImages);
+    _imageUrls.addAll(_extractImageUrls(p?.productImages));
     _loadData();
   }
 
   // productImages can come back as a JSON-encoded string, a List, or a
   // single URL string depending on the endpoint — handle all three safely.
-  String? _extractFirstImageUrl(dynamic raw) {
-    if (raw == null) return null;
-    if (raw is String && raw.isEmpty) return null;
-    if (raw is String && (raw.startsWith('http') || raw.startsWith('/'))) {
-      return raw;
-    }
-    if (raw is List && raw.isNotEmpty) {
-      final first = raw.first;
-      if (first is String) return first;
-      if (first is Map) {
-        return (first['url'] ?? first['image_url'] ?? first['path'])
-            ?.toString();
+  List<String> _extractImageUrls(dynamic raw) {
+    if (raw == null) return [];
+    dynamic value = raw;
+    if (value is String && value.isEmpty) return [];
+    if (value is String &&
+        !value.startsWith('http') &&
+        !value.startsWith('/')) {
+      // Likely a JSON-encoded array/string from the API — decode it.
+      try {
+        value = jsonDecode(value);
+      } catch (_) {
+        return [];
       }
     }
-    return null;
+    if (value is String) return [value];
+    if (value is List) {
+      return value
+          .map((e) {
+            if (e is String) return e;
+            if (e is Map) {
+              return (e['url'] ?? e['image_url'] ?? e['path'])?.toString();
+            }
+            return null;
+          })
+          .whereType<String>()
+          .toList();
+    }
+    return [];
   }
 
   Future<void> _loadData() async {
@@ -104,52 +120,54 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   // ── Image pick + upload ───────────────────────────────────────────────────
-  Future<void> _pickAndUploadImage() async {
-    final result = await _imagePicker.showImageSourceBottomSheet(context);
-    if (result == null || result is! XFile) return;
+  Future<void> _pickAndUploadImages() async {
+    final result = await _imagePicker.showImageSourceBottomSheet(context,
+        allowMultiple: true);
+    if (result == null) return;
 
-    final validation = await _imagePicker.validateImage(result);
-    if (!validation.isValid) {
-      if (mounted) {
+    final picked = result is List<XFile> ? result : [result as XFile];
+    if (picked.isEmpty) return;
+
+    setState(() => _uploadingImage = true);
+
+    for (final file in picked) {
+      final validation = await _imagePicker.validateImage(file);
+      if (!validation.isValid) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content:
+                Text('${file.name}: ${validation.errorMessage ?? 'Invalid image'}'),
+            backgroundColor: Colors.red,
+          ));
+        }
+        continue;
+      }
+
+      final url = await _imagePicker.uploadImage(
+        image: file,
+        uploadUrl: _kProductImageUploadUrl,
+        dio: ApiClient.dio,
+        fieldName: 'image',
+        // In edit mode the backend appends this straight onto the
+        // product's stored photo array, so it survives even if the
+        // vendor backs out without tapping Save.
+        additionalData: widget.product != null
+            ? {'product_id': widget.product!.productId}
+            : null,
+      );
+
+      if (!mounted) return;
+      if (url != null) {
+        setState(() => _imageUrls.add(url));
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(validation.errorMessage ?? 'Invalid image'),
+          content: Text('${file.name} failed to upload — skipped.'),
           backgroundColor: Colors.red,
         ));
       }
-      return;
     }
 
-    setState(() {
-      _pickedImage = result;
-      _uploadingImage = true;
-    });
-
-    final url = await _imagePicker.uploadImage(
-      image: result,
-      uploadUrl: _kProductImageUploadUrl,
-      dio: ApiClient.dio,
-      fieldName: 'image',
-      additionalData: widget.product != null
-          ? {'product_id': widget.product!.productId}
-          : null,
-    );
-
-    if (!mounted) return;
-    setState(() => _uploadingImage = false);
-
-    if (url == null) {
-      setState(() => _pickedImage = null);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Image upload failed. The product will be saved without it — you can add an image by editing it again.'),
-          backgroundColor: Colors.red,
-        ));
-      }
-      return;
-    }
-
-    setState(() => _uploadedImageUrl = url);
+    if (mounted) setState(() => _uploadingImage = false);
   }
 
   @override
@@ -180,7 +198,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         'is_featured': _isFeatured,
         'stock_quantity': int.tryParse(_stock.text) ?? 0,
         'outlet_id': _selectedOutlet,
-        if (_uploadedImageUrl != null) 'product_images': [_uploadedImageUrl],
+        // Always send the complete current list — this is what makes
+        // removing a photo in this screen actually stick. (Previously this
+        // sent only the single newest upload, which silently wiped out
+        // every other photo already on the product.)
+        'product_images': _imageUrls,
       };
       if (_isEdit) {
         await ProductsApi.update(widget.product!.productId, payload);
@@ -240,7 +262,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  _section('Product Photo', [_buildImagePicker()]),
+                  _section('Product Photos', [_buildImagePicker()]),
                   const SizedBox(height: 16),
                   _section('Basic Info', [
                     _field('Product Name *', _name, required: true),
@@ -334,83 +356,110 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   Widget _buildImagePicker() {
-    final hasLocal = _pickedImage != null;
-    final hasRemote = _uploadedImageUrl != null || _existingImageUrl != null;
-
-    Widget preview;
-    if (_uploadingImage) {
-      preview = const SizedBox(
-        height: 160,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    } else if (hasLocal) {
-      preview = ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.file(File(_pickedImage!.path),
-            height: 160, width: double.infinity, fit: BoxFit.cover),
-      );
-    } else if (hasRemote) {
-      preview = ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          _uploadedImageUrl ?? _existingImageUrl!,
-          height: 160,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Container(
-            height: 160,
-            color: Colors.grey[200],
-            child:
-                const Icon(Icons.broken_image, color: Colors.grey, size: 32),
-          ),
-        ),
-      );
-    } else {
-      preview = Container(
-        height: 160,
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!),
-        ),
-        child: const Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.add_a_photo_outlined, color: Colors.grey, size: 32),
-              SizedBox(height: 8),
-              Text('No photo added', style: TextStyle(color: Colors.grey)),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      preview,
-      const SizedBox(height: 12),
-      Row(children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: _uploadingImage ? null : _pickAndUploadImage,
-            icon: const Icon(Icons.photo_camera_outlined),
-            label: Text(hasRemote || hasLocal ? 'Change Photo' : 'Add Photo'),
-          ),
+      SizedBox(
+        height: 96,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: [
+            for (var i = 0; i < _imageUrls.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: _photoThumb(
+                  child: Image.network(
+                    _imageUrls[i],
+                    width: 96,
+                    height: 96,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.broken_image,
+                          color: Colors.grey, size: 28),
+                    ),
+                  ),
+                  onRemove: _uploadingImage
+                      ? null
+                      : () => setState(() => _imageUrls.removeAt(i)),
+                ),
+              ),
+            if (_uploadingImage)
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Center(
+                      child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2))),
+                ),
+              ),
+            InkWell(
+              onTap: _uploadingImage ? null : _pickAndUploadImages,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_a_photo_outlined,
+                          color: Colors.grey, size: 24),
+                      SizedBox(height: 4),
+                      Text('Add', style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        if ((hasRemote || hasLocal) && !_uploadingImage) ...[
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: () => setState(() {
-              _pickedImage = null;
-              _uploadedImageUrl = null;
-              _existingImageUrl = null;
-            }),
-            icon: const Icon(Icons.close, color: Colors.red),
-            tooltip: 'Remove photo',
-          ),
-        ],
-      ]),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        _imageUrls.isEmpty
+            ? 'No photos added yet — the first one is shown to customers.'
+            : 'First photo is shown to customers. Tap Add for more, or the × to remove one.',
+        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+      ),
     ]);
+  }
+
+  Widget _photoThumb({required Widget child, VoidCallback? onRemove}) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipRRect(borderRadius: BorderRadius.circular(8), child: child),
+        if (onRemove != null)
+          Positioned(
+            top: -6,
+            right: -6,
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child:
+                    const Icon(Icons.close, color: Colors.white, size: 14),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _section(String title, List<Widget> children) {

@@ -38,15 +38,20 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
           plansData.map((json) => SubscriptionPlan.fromJson(json)).toList();
       final current = await SubscriptionsApi.getCurrent();
 
+      // Vendor may have left this screen while these requests were in
+      // flight — calling setState on an unmounted State throws and
+      // crashes the app.
+      if (!mounted) return;
       setState(() {
         _plans = plans;
         _subscriptionId = current?['id'];
         _activePlanId = current?['plan_id'];
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
