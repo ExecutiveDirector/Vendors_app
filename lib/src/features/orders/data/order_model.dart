@@ -33,6 +33,7 @@ class Order {
   final String? deliveryContact;
   final String? customerNote;
   final String? riderName;
+  final bool hasRider;
   final String? riderPhone;
   final String? riderVehicleType;
   final String? vendorName;
@@ -53,6 +54,7 @@ class Order {
     this.deliveryContact,
     this.customerNote,
     this.riderName,
+    this.hasRider = false,
     this.riderPhone,
     this.riderVehicleType,
     this.vendorName,
@@ -92,6 +94,7 @@ class Order {
             ? riderFullName
             : (json['rider']?['name']?.toString() ??
                 json['rider']?['full_name']?.toString()),
+        hasRider: json['rider_id'] != null || rider != null,
         riderPhone: riderAccount?['phone_number']?.toString() ??
             json['rider']?['phone']?.toString(),
         riderVehicleType: rider?['vehicle_type']?.toString(),
@@ -113,7 +116,9 @@ class Order {
   bool get hasDeliveryLocation =>
       deliveryLatitude != null && deliveryLongitude != null;
 
-  double get grandTotal => totalAmount + deliveryFee;
+  // total_amount already includes the delivery fee (detail screen derives
+  // subtotal as total - fee), so adding the fee again double-counted it.
+  double get grandTotal => totalAmount;
 
   String get displayStatus {
     switch (orderStatus.toLowerCase()) {
