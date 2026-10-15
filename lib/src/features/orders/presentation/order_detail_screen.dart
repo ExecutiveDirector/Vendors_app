@@ -82,15 +82,22 @@ class _OrderDetail extends StatelessWidget {
   final void Function(String) onUpdateStatus;
   const _OrderDetail({required this.order, required this.onUpdateStatus});
 
-  static const _allStatuses = [
-    'pending',
-    'confirmed',
-    'preparing',
-    'ready',
-    'dispatched',
-    'delivered',
-    'canceled'
-  ];
+  // What a vendor may do next (mirrors the backend lifecycle rules). Delivery
+  // is confirmed by the rider with proof, so 'delivered' is never offered.
+  List<String> get _allowedNext {
+    switch (order.orderStatus) {
+      case 'pending':
+        return ['confirmed', 'canceled'];
+      case 'confirmed':
+        return ['preparing', 'ready', 'canceled'];
+      case 'preparing':
+        return ['ready', 'canceled'];
+      case 'ready':
+        return [if (!order.hasRider) 'dispatched', 'canceled'];
+      default:
+        return const [];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -250,8 +257,15 @@ class _OrderDetail extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 20),
-        if (order.orderStatus != 'delivered' &&
-            order.orderStatus != 'canceled') ...[
+        if (order.hasRider &&
+            (order.orderStatus == 'ready' || order.orderStatus == 'dispatched'))
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Text(
+                'A rider is assigned. They confirm pickup and delivery in their app.',
+                style: TextStyle(color: Colors.grey, fontSize: 13)),
+          ),
+        if (_allowedNext.isNotEmpty) ...[
           const Text('Update Status',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -261,8 +275,7 @@ class _OrderDetail extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _allStatuses
-                .where((s) => s != order.orderStatus)
+            children: _allowedNext
                 .map((s) => ActionChip(
                       label: Text(_capitalize(s)),
                       onPressed: () => _confirmStatus(context, s),

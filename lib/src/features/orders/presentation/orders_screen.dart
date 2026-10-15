@@ -197,15 +197,13 @@ class _OrderCard extends StatelessWidget {
     'pending': 'confirmed',
     'confirmed': 'preparing',
     'preparing': 'ready',
-    'ready': 'dispatched',
-    'dispatched': 'delivered',
+    'ready': 'dispatched', // self-delivery only; hidden when a rider is assigned
   };
   static const _nextLabel = {
     'pending': 'Confirm',
     'confirmed': 'Start Preparing',
     'preparing': 'Mark Ready',
     'ready': 'Dispatch',
-    'dispatched': 'Mark Delivered',
   };
 
   Future<void> _advance(BuildContext context, String next) async {
@@ -229,8 +227,11 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final next = _nextStatus[order.orderStatus];
-    final nextLabel = _nextLabel[order.orderStatus];
+    // A rider owns pickup and delivery (with proof): vendors only prepare.
+    final riderOwnsHandover = order.hasRider &&
+        (order.orderStatus == 'ready' || order.orderStatus == 'dispatched');
+    final next = riderOwnsHandover ? null : _nextStatus[order.orderStatus];
+    final nextLabel = riderOwnsHandover ? null : _nextLabel[order.orderStatus];
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
