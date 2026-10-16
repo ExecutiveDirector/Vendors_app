@@ -4,6 +4,7 @@ import '../data/auth_api.dart';
 import '../../../core/services/local_storage.dart';
 import '../../../core/services/push_notification_service.dart';
 import '../../../core/services/notification_watcher_service.dart';
+import '../../../core/services/incoming_order_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool sessionExpired;
@@ -545,6 +546,7 @@ class _LoginScreenState extends State<LoginScreen>
         // updates, payments, promos, alerts, reminders) so every one of
         // them rings/vibrates the phone, not just "new paid order" pushes.
         NotificationWatcherService.instance.start();
+        IncomingOrderService.instance.start();
 
         if (_rememberMe) {
           await LocalStorage.setString('remembered_email', emailInput);
