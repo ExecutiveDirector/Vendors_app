@@ -244,3 +244,68 @@ Future<bool?> showConfirmDialog(BuildContext context,
     ),
   );
 }
+
+
+/// Asks why an order is being cancelled. Returns the reason, or null if the
+/// vendor backs out. The server requires it (and stores it for admin/refunds).
+Future<String?> askCancelReason(BuildContext context,
+    {required bool paid}) {
+  const quick = [
+    'Out of stock',
+    'Cannot deliver to this area',
+    'Outlet closed',
+    'Customer asked to cancel',
+  ];
+  final ctrl = TextEditingController();
+  return showDialog<String>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => AlertDialog(
+        title: const Text('Cancel this order?'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(paid
+                  ? 'The customer has already paid. AquaGas will refund them.'
+                  : 'The customer will be told the order was cancelled.'),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final q in quick)
+                    ChoiceChip(
+                      label: Text(q, style: const TextStyle(fontSize: 12)),
+                      selected: ctrl.text == q,
+                      onSelected: (_) => setState(() => ctrl.text = q),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ctrl,
+                maxLength: 200,
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(
+                    labelText: 'Reason', border: OutlineInputBorder()),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Keep order')),
+          ElevatedButton(
+            onPressed: ctrl.text.trim().length >= 3
+                ? () => Navigator.pop(ctx, ctrl.text.trim())
+                : null,
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Cancel order'),
+          ),
+        ],
+      ),
+    ),
+  );
+}

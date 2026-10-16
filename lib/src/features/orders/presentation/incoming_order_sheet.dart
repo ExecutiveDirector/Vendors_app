@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../data/order_model.dart';
 import '../data/orders_api.dart';
+import '../../../core/widgets/shared_widgets.dart';
 
 enum IncomingOrderResult { accepted, declined, later }
 
@@ -74,30 +75,16 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
   }
 
   Future<void> _decline() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Decline this order?'),
-        content: const Text(
-            'The customer will be notified that the order was cancelled.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Keep')),
-          FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Decline')),
-        ],
-      ),
-    );
-    if (ok != true) return;
+    final reason = await askCancelReason(context,
+        paid: widget.order.paymentStatus.toLowerCase() == 'paid');
+    if (reason == null) return;
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await OrdersApi.updateStatus(widget.order.orderId, 'canceled');
+      await OrdersApi.updateStatus(widget.order.orderId, 'canceled',
+          reason: reason);
       if (mounted) Navigator.pop(context, IncomingOrderResult.declined);
     } catch (e) {
       if (mounted) {

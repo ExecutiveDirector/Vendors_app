@@ -23,10 +23,12 @@ class OrdersApi {
     return Order.fromJson(data);
   }
 
-  static Future<void> updateStatus(String orderId, String status) async {
+  /// [reason] is required by the server when [status] is 'canceled'.
+  static Future<void> updateStatus(String orderId, String status,
+      {String? reason}) async {
     await ApiClient.dio.put(
       '/vendors/orders/$orderId/status',
-      data: {'status': status},
+      data: {'status': status, if (reason != null) 'reason': reason},
     );
   }
 
