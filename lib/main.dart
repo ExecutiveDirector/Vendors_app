@@ -6,6 +6,7 @@ import 'src/core/bootstrap.dart';
 import 'src/core/theme.dart';
 import 'src/core/services/push_notification_service.dart';
 import 'src/core/services/notification_watcher_service.dart';
+import 'src/core/services/incoming_order_service.dart';
 import 'src/core/services/local_storage.dart';
 // Contains real Android config values extracted from
 // android/app/google-services.json. Does NOT cover iOS or web — see the
@@ -62,6 +63,7 @@ Future<void> main() async {
   final existingToken = await LocalStorage.getToken();
   if (existingToken != null) {
     NotificationWatcherService.instance.start();
+    IncomingOrderService.instance.start();
   }
 
   runApp(const VendorApp());

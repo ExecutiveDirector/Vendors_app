@@ -25,10 +25,12 @@
 
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../api/dio_client.dart';
+import 'incoming_order_service.dart';
 
 const String _ordersChannelId = 'orders';
 const String _ordersChannelName = 'Orders';
@@ -76,11 +78,67 @@ const _NotificationChannel _defaultChannel =
 /// because it runs in a separate isolate when the app is killed.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Intentionally minimal: when the app is backgrounded or killed, the OS
-  // already shows the notification (title/body/sound) using the
-  // `notification` payload and the AndroidManifest default channel —
-  // no action needed here for that to work.
+  // Messages with a `notification` block are shown by the OS itself. New-order
+  // alerts are data-only (type: new_order) so the app can raise a loud
+  // full-screen alert here — a plain notification never woke a sleeping phone.
+  if (message.notification != null || message.data['type'] != 'new_order') {
+    return;
+  }
+  DartPluginRegistrant.ensureInitialized();
+  final plugin = FlutterLocalNotificationsPlugin();
+  await plugin.initialize(const InitializationSettings(
+    android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    iOS: DarwinInitializationSettings(),
+  ));
+  await plugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(_ordersChannel);
+  await plugin.show(
+    ((int.tryParse(message.data['order_id'] ?? '') ?? message.hashCode) &
+        0x7fffffff),
+    message.data['title'] ?? 'New order',
+    message.data['body'] ?? 'A customer order needs your approval',
+    _orderAlertDetails(),
+    payload: message.data['order_id'],
+  );
 }
+
+final Int64List _alarmVibration =
+    Int64List.fromList([0, 800, 400, 800, 400, 800, 400, 800]);
+
+final AndroidNotificationChannel _ordersChannel = AndroidNotificationChannel(
+  _ordersChannelId,
+  _ordersChannelName,
+  description: _ordersChannelDescription,
+  importance: Importance.max,
+  playSound: true,
+  audioAttributesUsage: AudioAttributesUsage.alarm,
+  enableVibration: true,
+  vibrationPattern: _alarmVibration,
+);
+
+NotificationDetails _orderAlertDetails() => NotificationDetails(
+      android: AndroidNotificationDetails(
+        _ordersChannelId,
+        _ordersChannelName,
+        channelDescription: _ordersChannelDescription,
+        importance: Importance.max,
+        priority: Priority.max,
+        playSound: true,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+        enableVibration: true,
+        vibrationPattern: _alarmVibration,
+        fullScreenIntent: true,
+        category: AndroidNotificationCategory.alarm,
+        visibility: NotificationVisibility.public,
+        timeoutAfter: 120000,
+      ),
+      iOS: const DarwinNotificationDetails(
+        presentSound: true,
+        interruptionLevel: InterruptionLevel.timeSensitive,
+      ),
+    );
 
 class PushNotificationService {
   static bool _initialized = false;
@@ -104,7 +162,26 @@ class PushNotificationService {
     // When the vendor taps a notification that arrived while the app was
     // backgrounded (not killed), this fires. Left as a no-op — wire up
     // navigation to /orders/${message.data['order_id']} here if desired.
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {});
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      if (message.data['type'] == 'new_order') {
+        IncomingOrderService.instance.showFor(message.data['order_id']);
+      }
+    });
+
+    // App was launched (from killed) by tapping an order alert.
+    try {
+      final initial = await FirebaseMessaging.instance.getInitialMessage();
+      if (initial?.data['type'] == 'new_order') {
+        IncomingOrderService.instance.showFor(initial!.data['order_id']);
+      }
+      final launch = await _localNotifications.getNotificationAppLaunchDetails();
+      final payload = launch?.notificationResponse?.payload;
+      if (launch?.didNotificationLaunchApp == true && payload != null) {
+        IncomingOrderService.instance.showFor(payload);
+      }
+    } catch (e) {
+      debugPrint('⚠️ launch details failed: $e');
+    }
   }
 
   static Future<void> _requestPermission() async {
@@ -124,12 +201,20 @@ class PushNotificationService {
     const iosInit = DarwinInitializationSettings();
     await _localNotifications.initialize(
       const InitializationSettings(android: androidInit, iOS: iosInit),
+      onDidReceiveNotificationResponse: (response) {
+        final id = response.payload;
+        if (id != null && id.isNotEmpty) {
+          IncomingOrderService.instance.showFor(id);
+        }
+      },
     );
 
     if (Platform.isAndroid) {
       final androidImpl = _localNotifications
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
+      // Android 14+: full-screen order alerts need an explicit grant.
+      await androidImpl?.requestFullScreenIntentPermission();
       for (final ch in [..._channelsByType.values, _defaultChannel]) {
         final isOrdersChannel = ch.id == _ordersChannelId;
         await androidImpl?.createNotificationChannel(AndroidNotificationChannel(
@@ -151,6 +236,17 @@ class PushNotificationService {
   }
 
   static void _showForegroundNotification(RemoteMessage message) {
+    // Data-only new-order alert while the app is open: raise the accept sheet.
+    if (message.data['type'] == 'new_order') {
+      showLocalNotification(
+        id: message.hashCode,
+        title: message.data['title'] ?? 'New order',
+        body: message.data['body'] ?? '',
+        type: 'order_update',
+      );
+      IncomingOrderService.instance.showFor(message.data['order_id']);
+      return;
+    }
     final notification = message.notification;
     if (notification == null) return;
 

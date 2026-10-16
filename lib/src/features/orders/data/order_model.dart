@@ -31,6 +31,7 @@ class Order {
   final double deliveryFee;
   final String? deliveryAddress;
   final String? deliveryContact;
+  final double? codAmount; // cash the rider collects; null = prepaid
   final String? customerNote;
   final String? riderName;
   final bool hasRider;
@@ -52,6 +53,7 @@ class Order {
     this.deliveryFee = 0,
     this.deliveryAddress,
     this.deliveryContact,
+    this.codAmount,
     this.customerNote,
     this.riderName,
     this.hasRider = false,
@@ -89,6 +91,9 @@ class Order {
         deliveryFee: _parseDouble(json['delivery_fee']),
         deliveryAddress: json['delivery_address']?.toString(),
         deliveryContact: json['delivery_contact']?.toString(),
+        codAmount: _parseDouble(json['cod_amount']) > 0
+            ? _parseDouble(json['cod_amount'])
+            : null,
         customerNote: json['customer_note']?.toString(),
         riderName: (riderFullName != null && riderFullName.isNotEmpty)
             ? riderFullName
@@ -112,6 +117,13 @@ class Order {
             .toList(),
       );
   }
+
+  bool get isCod => codAmount != null;
+
+  /// Needs the vendor's accept/decline: customer has paid, or chose cash on delivery.
+  bool get needsVendorAction =>
+      orderStatus.toLowerCase() == 'pending' &&
+      (paymentStatus.toLowerCase() == 'paid' || isCod);
 
   bool get hasDeliveryLocation =>
       deliveryLatitude != null && deliveryLongitude != null;
