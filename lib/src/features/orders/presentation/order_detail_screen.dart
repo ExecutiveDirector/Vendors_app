@@ -43,9 +43,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  Future<void> _updateStatus(String status) async {
+  Future<void> _updateStatus(String status, {String? reason}) async {
     try {
-      await OrdersApi.updateStatus(widget.id, status);
+      await OrdersApi.updateStatus(widget.id, status, reason: reason);
       _load();
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -79,7 +79,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
 class _OrderDetail extends StatelessWidget {
   final Order order;
-  final void Function(String) onUpdateStatus;
+  final void Function(String, {String? reason}) onUpdateStatus;
   const _OrderDetail({required this.order, required this.onUpdateStatus});
 
   // What a vendor may do next (mirrors the backend lifecycle rules). Delivery
@@ -293,6 +293,12 @@ class _OrderDetail extends StatelessWidget {
   }
 
   Future<void> _confirmStatus(BuildContext context, String status) async {
+    if (status == 'canceled') {
+      final reason = await askCancelReason(context,
+          paid: order.paymentStatus.toLowerCase() == 'paid');
+      if (reason != null) onUpdateStatus(status, reason: reason);
+      return;
+    }
     final ok = await showConfirmDialog(context,
         title: 'Update Status',
         content: 'Change order to "${_capitalize(status)}"?',
