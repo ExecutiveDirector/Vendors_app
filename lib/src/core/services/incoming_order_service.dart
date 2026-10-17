@@ -10,6 +10,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../navigation/app_navigator_key.dart';
+import 'push_notification_service.dart';
 import '../../features/orders/data/order_model.dart';
 import '../../features/orders/data/orders_api.dart';
 import '../../features/orders/presentation/incoming_order_sheet.dart';
@@ -113,6 +114,7 @@ class IncomingOrderService with WidgetsBindingObserver {
     if (context == null) return; // UI not mounted yet; the next poll retries
     _showing = true;
     final order = _queue.removeAt(0);
+    unawaited(PushNotificationService.cancelOrderAlert(order.orderId));
     try {
       final result = await showModalBottomSheet<IncomingOrderResult>(
         context: context,

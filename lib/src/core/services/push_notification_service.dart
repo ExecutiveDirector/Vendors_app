@@ -107,12 +107,17 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 final Int64List _alarmVibration =
     Int64List.fromList([0, 800, 400, 800, 400, 800, 400, 800]);
 
+// A NEW channel id: Android never lets an existing channel's sound change, and the
+// old 'orders' channel had the default tone. This one carries the custom order alarm.
+const String _alertChannelId = 'new_order_alert';
+
 final AndroidNotificationChannel _ordersChannel = AndroidNotificationChannel(
-  _ordersChannelId,
-  _ordersChannelName,
-  description: _ordersChannelDescription,
+  _alertChannelId,
+  'New order alerts',
+  description: 'Loud alarm when a customer order needs your approval',
   importance: Importance.max,
   playSound: true,
+  sound: const RawResourceAndroidNotificationSound('order_alert'),
   audioAttributesUsage: AudioAttributesUsage.alarm,
   enableVibration: true,
   vibrationPattern: _alarmVibration,
@@ -120,12 +125,17 @@ final AndroidNotificationChannel _ordersChannel = AndroidNotificationChannel(
 
 NotificationDetails _orderAlertDetails() => NotificationDetails(
       android: AndroidNotificationDetails(
-        _ordersChannelId,
-        _ordersChannelName,
-        channelDescription: _ordersChannelDescription,
+        _alertChannelId,
+        'New order alerts',
+        channelDescription: 'Loud alarm when a customer order needs your approval',
         importance: Importance.max,
         priority: Priority.max,
         playSound: true,
+        sound: const RawResourceAndroidNotificationSound('order_alert'),
+        // FLAG_INSISTENT: keep repeating the sound until the alert is opened/dismissed.
+        additionalFlags: Int32List.fromList(<int>[4]),
+        ongoing: true,
+        autoCancel: true,
         audioAttributesUsage: AudioAttributesUsage.alarm,
         enableVibration: true,
         vibrationPattern: _alarmVibration,
@@ -213,6 +223,7 @@ class PushNotificationService {
       final androidImpl = _localNotifications
           .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin>();
+      await androidImpl?.createNotificationChannel(_ordersChannel);
       // Android 14+: full-screen order alerts need an explicit grant.
       await androidImpl?.requestFullScreenIntentPermission();
       for (final ch in [..._channelsByType.values, _defaultChannel]) {
@@ -238,12 +249,7 @@ class PushNotificationService {
   static void _showForegroundNotification(RemoteMessage message) {
     // Data-only new-order alert while the app is open: raise the accept sheet.
     if (message.data['type'] == 'new_order') {
-      showLocalNotification(
-        id: message.hashCode,
-        title: message.data['title'] ?? 'New order',
-        body: message.data['body'] ?? '',
-        type: 'order_update',
-      );
+      // The accept sheet rings (looping alarm) itself; no tray notification needed in the foreground.
       IncomingOrderService.instance.showFor(message.data['order_id']);
       return;
     }
@@ -322,6 +328,15 @@ class PushNotificationService {
         ),
       ),
     );
+  }
+
+  /// The sheet is now on screen and rings by itself — silence the tray alert
+  /// (which would otherwise keep repeating its insistent sound).
+  static Future<void> cancelOrderAlert(String orderId) async {
+    try {
+      final id = (int.tryParse(orderId) ?? orderId.hashCode) & 0x7fffffff;
+      await _localNotifications.cancel(id);
+    } catch (_) {}
   }
 
   /// Call after the vendor is logged in. Gets this device's FCM token and
