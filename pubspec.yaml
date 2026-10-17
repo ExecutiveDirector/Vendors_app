@@ -28,6 +28,7 @@ dependencies:
   flutter_local_notifications: ^18.0.1
   cupertino_icons: ^1.0.8
   app_settings: ^5.1.1
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -36,3 +37,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/sounds/

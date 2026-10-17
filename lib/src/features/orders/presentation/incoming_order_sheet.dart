@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/services/order_alert_sound_service.dart';
 import '../data/order_model.dart';
 import '../data/orders_api.dart';
 import '../../../core/widgets/shared_widgets.dart';
@@ -30,20 +31,16 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
     super.initState();
     _placedAt = DateTime.tryParse(widget.order.createdAt)?.toLocal() ??
         DateTime.now();
-    _beep();
-    _ring = Timer.periodic(const Duration(seconds: 4), (_) => _beep());
+    OrderAlertSoundService.instance.play(); // looping alarm until the vendor acts
+    _ring = Timer.periodic(const Duration(seconds: 4), (_) => HapticFeedback.heavyImpact());
     _clock = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) setState(() {});
     });
   }
 
-  void _beep() {
-    SystemSound.play(SystemSoundType.alert);
-    HapticFeedback.heavyImpact();
-  }
-
   @override
   void dispose() {
+    OrderAlertSoundService.instance.stop();
     _ring?.cancel();
     _clock?.cancel();
     super.dispose();
@@ -56,6 +53,7 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
   }
 
   Future<void> _accept() async {
+    OrderAlertSoundService.instance.stop();
     setState(() {
       _busy = true;
       _error = null;
@@ -78,6 +76,7 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
     final reason = await askCancelReason(context,
         paid: widget.order.paymentStatus.toLowerCase() == 'paid');
     if (reason == null) return;
+    OrderAlertSoundService.instance.stop();
     setState(() {
       _busy = true;
       _error = null;
