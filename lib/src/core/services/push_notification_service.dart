@@ -26,6 +26,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
+import 'package:dio/dio.dart' show DioException;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -81,7 +82,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Messages with a `notification` block are shown by the OS itself. New-order
   // alerts are data-only (type: new_order) so the app can raise a loud
   // full-screen alert here — a plain notification never woke a sleeping phone.
-  if (message.notification != null || message.data['type'] != 'new_order') {
+  if (message.notification != null ||
+      (message.data['type'] != 'new_order' && message.data['type'] != 'test_alert')) {
     return;
   }
   DartPluginRegistrant.ensureInitialized();
@@ -343,6 +345,9 @@ class PushNotificationService {
   /// registers it with the backend so order-paid pushes can reach this
   /// device. Matches the real route: POST /vendors/push-token/register
   /// (vendorController.registerVendorPushToken).
+  static bool _refreshListening = false;
+  static DateTime? _lastRegisteredAt;
+
   static Future<void> registerTokenWithBackend() async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
@@ -353,6 +358,9 @@ class PushNotificationService {
         'platform': Platform.isIOS ? 'ios' : 'android',
       });
 
+      _lastRegisteredAt = DateTime.now();
+      if (_refreshListening) return;
+      _refreshListening = true;
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
         ApiClient.dio.post('/vendors/push-token/register', data: {
           'token': newToken,
@@ -368,6 +376,28 @@ class PushNotificationService {
 
   /// Call on logout. Matches DELETE /vendors/push-token/unregister
   /// (vendorController.unregisterVendorPushToken).
+  /// Cheap to call often: re-sends the token at most once an hour (e.g. on app resume).
+  static Future<void> ensureRegistered() async {
+    final last = _lastRegisteredAt;
+    if (last != null && DateTime.now().difference(last) < const Duration(hours: 1)) return;
+    await registerTokenWithBackend();
+  }
+
+  /// Ask the server to push a loud test alert to this phone after [delaySeconds]
+  /// (lock the phone meanwhile). Returns a message to show the vendor.
+  static Future<String> sendTestAlert({int delaySeconds = 10}) async {
+    try {
+      final res = await ApiClient.dio.post('/vendors/push-test', data: {'delay_seconds': delaySeconds});
+      final n = res.data['active_devices'];
+      return 'Test alert sends in $delaySeconds seconds to $n device(s). Lock your phone now.';
+    } on DioException catch (e) {
+      final msg = e.response?.data is Map ? e.response?.data['error'] : null;
+      return (msg ?? 'Could not reach the server. Check your internet.').toString();
+    } catch (_) {
+      return 'Could not send the test alert.';
+    }
+  }
+
   static Future<void> unregisterToken() async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
