@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../data/order_model.dart';
@@ -21,22 +22,29 @@ class OrdersScreen extends StatefulWidget {
 class _OrdersScreenState extends State<OrdersScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabs;
-  final _statuses = [
-    'all',
-    'pending',
-    'confirmed',
-    'preparing',
-    'dispatched',
-    'delivered'
-  ];
-  final _statusLabels = [
-    'All',
-    'Pending',
-    'Confirmed',
-    'Preparing',
-    'Dispatched',
-    'Delivered'
-  ];
+  // Work queues, in the order a vendor handles them. An accepted order leaves "New"
+  // and moves to "Preparing" straight away.
+  final _statuses = ['new', 'preparing', 'ready', 'ontheway', 'done', 'all'];
+  final _statusLabels = ['New', 'Preparing', 'Ready', 'On the way', 'Done', 'All'];
+  Timer? _autoRefresh;
+
+  static bool _inQueue(String queue, Order o) {
+    final st = o.orderStatus.toLowerCase();
+    switch (queue) {
+      case 'new':
+        return st == 'pending' && o.needsVendorAction;
+      case 'preparing':
+        return st == 'confirmed' || st == 'preparing';
+      case 'ready':
+        return st == 'ready';
+      case 'ontheway':
+        return st == 'dispatched';
+      case 'done':
+        return st == 'delivered' || st == 'canceled' || st == 'cancelled' || st == 'refunded';
+      default:
+        return true;
+    }
+  }
   List<Order> _all = [];
   bool _loading = true;
   String? _error;
@@ -47,19 +55,24 @@ class _OrdersScreenState extends State<OrdersScreen>
     super.initState();
     _tabs = TabController(length: _statuses.length, vsync: this);
     _load();
+    // Orders get accepted from the alert sheet too; keep this list current without a spinner.
+    _autoRefresh = Timer.periodic(const Duration(seconds: 15), (_) => _load(silent: true));
   }
 
   @override
   void dispose() {
+    _autoRefresh?.cancel();
     _tabs.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final data = await OrdersApi.list();
       if (mounted)
@@ -68,18 +81,17 @@ class _OrdersScreenState extends State<OrdersScreen>
           _loading = false;
         });
     } catch (e) {
-      if (mounted)
+      if (mounted && !silent) {
         setState(() {
           _error = e.toString();
           _loading = false;
         });
+      }
     }
   }
 
   List<Order> _forStatus(String status) {
-    var list = status == 'all'
-        ? _all
-        : _all.where((o) => o.orderStatus == status).toList();
+    var list = _all.where((o) => _inQueue(status, o)).toList();
     if (_search.isNotEmpty) {
       final q = _search.toLowerCase();
       list = list
@@ -91,9 +103,7 @@ class _OrdersScreenState extends State<OrdersScreen>
     return list;
   }
 
-  int _count(String status) => status == 'all'
-      ? _all.length
-      : _all.where((o) => o.orderStatus == status).length;
+  int _count(String status) => _all.where((o) => _inQueue(status, o)).length;
 
   @override
   Widget build(BuildContext context) {
@@ -200,7 +210,7 @@ class _OrderCard extends StatelessWidget {
     'ready': 'dispatched', // self-delivery only; hidden when a rider is assigned
   };
   static const _nextLabel = {
-    'pending': 'Confirm',
+    'pending': 'Accept',
     'confirmed': 'Start Preparing',
     'preparing': 'Mark Ready',
     'ready': 'Dispatch',
@@ -230,8 +240,10 @@ class _OrderCard extends StatelessWidget {
     // A rider owns pickup and delivery (with proof): vendors only prepare.
     final riderOwnsHandover = order.hasRider &&
         (order.orderStatus == 'ready' || order.orderStatus == 'dispatched');
-    final next = riderOwnsHandover ? null : _nextStatus[order.orderStatus];
-    final nextLabel = riderOwnsHandover ? null : _nextLabel[order.orderStatus];
+    // A pending order that is unpaid (and not cash) can't be accepted yet.
+    final waitingPayment = order.orderStatus == 'pending' && !order.needsVendorAction;
+    final next = (riderOwnsHandover || waitingPayment) ? null : _nextStatus[order.orderStatus];
+    final nextLabel = (riderOwnsHandover || waitingPayment) ? null : _nextLabel[order.orderStatus];
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -309,6 +321,12 @@ class _OrderCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+              ),
+            if (waitingPayment)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text('Waiting for the customer to pay',
+                    style: TextStyle(fontSize: 12, color: Colors.orange.shade800)),
               ),
             if (next != null && nextLabel != null) ...[
               const SizedBox(height: 10),
