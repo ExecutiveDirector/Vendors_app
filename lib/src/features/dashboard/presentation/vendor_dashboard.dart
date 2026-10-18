@@ -141,7 +141,29 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 children: [
                   _HeroCard(onViewOrders: () => context.push('/orders')),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const _SectionLabel(label: 'Recent Orders'),
+                      TextButton(
+                        onPressed: () => context.push('/orders'),
+                        child: Text('View all',
+                            style: TextStyle(
+                                color: cs.primary,
+                                fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_recentOrders.isEmpty)
+                    const AppEmpty(
+                      icon: Icons.receipt_long_outlined,
+                      message: 'No recent orders',
+                    )
+                  else
+                    ..._recentOrders.take(5).map((o) => _OrderCard(order: o)),
+                  const SizedBox(height: 28),
                   const _SectionLabel(label: 'Overview'),
                   const SizedBox(height: 12),
                   GridView.count(
@@ -157,16 +179,16 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                         title: 'Total Orders',
                         value: '${_safeInt(_stats?['totalOrders'])}',
                         color: cs.primary,
-                        trend: '+12% vs last week',
-                        trendUp: true,
+                        trend: 'All orders',
+                        trendUp: null,
                       ),
                       _KpiCard(
                         icon: Icons.payments_rounded,
                         title: 'Revenue',
                         value: 'KES ${_formatNum(_stats?['revenue'])}',
                         color: const Color(0xFF10B981),
-                        trend: '+8% vs last week',
-                        trendUp: true,
+                        trend: 'Total sales',
+                        trendUp: null,
                       ),
                       _KpiCard(
                         icon: Icons.pending_actions_rounded,
@@ -189,11 +211,14 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                   const SizedBox(height: 28),
                   const _SectionLabel(label: 'Quick Actions'),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: 90,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 0.85,
+                    children: [
                         _QuickAction(
                           icon: Icons.receipt_long_rounded,
                           label: 'Orders',
@@ -211,12 +236,6 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                           label: 'Inventory',
                           color: const Color(0xFF8B5CF6),
                           onTap: () => context.push('/inventory'),
-                        ),
-                        _QuickAction(
-                          icon: Icons.sync_rounded,
-                          label: 'Wholesaler Sync',
-                          color: const Color(0xFF10B981),
-                          onTap: () => context.push('/wholesaler-sync'),
                         ),
                         _QuickAction(
                           icon: Icons.storefront_rounded,
@@ -261,30 +280,7 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
                           onTap: () => context.push('/reviews'),
                         ),
                       ],
-                    ),
                   ),
-                  const SizedBox(height: 28),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const _SectionLabel(label: 'Recent Orders'),
-                      TextButton(
-                        onPressed: () => context.push('/orders'),
-                        child: Text('View all',
-                            style: TextStyle(
-                                color: cs.primary,
-                                fontWeight: FontWeight.w600)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (_recentOrders.isEmpty)
-                    const AppEmpty(
-                      icon: Icons.receipt_long_outlined,
-                      message: 'No recent orders',
-                    )
-                  else
-                    ..._recentOrders.take(5).map((o) => _OrderCard(order: o)),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -643,8 +639,6 @@ class _QuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 76,
-      margin: const EdgeInsets.only(right: 10),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
