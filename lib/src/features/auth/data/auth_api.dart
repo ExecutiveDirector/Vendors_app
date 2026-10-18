@@ -139,7 +139,7 @@ class VendorAuthApi {
   /// Useful for phone-registered users who may not have one yet.
   static Future<Map<String, dynamic>> checkPasswordStatus() async {
     try {
-      final res = await ApiClient.dio.get('/auth/password-status');
+      final res = await ApiClient.dio.get('/auth/check-password-status');
       return res.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw Exception(_handleDioError(e));
