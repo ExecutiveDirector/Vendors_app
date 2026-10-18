@@ -64,6 +64,10 @@ Future<void> main() async {
   if (existingToken != null) {
     NotificationWatcherService.instance.start();
     IncomingOrderService.instance.start();
+    // The token was previously only sent at a fresh login, so after an app
+    // restart (or a token change) the server had no/old token and pushes
+    // never reached a sleeping phone.
+    PushNotificationService.registerTokenWithBackend();
   }
 
   runApp(const VendorApp());

@@ -55,7 +55,10 @@ class IncomingOrderService with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _active) unawaited(_poll());
+    if (state == AppLifecycleState.resumed && _active) {
+      unawaited(_poll());
+      unawaited(PushNotificationService.ensureRegistered());
+    }
   }
 
   /// A push / alert tap named this order: fetch it and raise the sheet now.

@@ -165,6 +165,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     _buildProfileCard(cs),
                     _buildSectionHeader('Notifications', cs),
                     _buildNotificationsTile(cs),
+                    _buildTestAlertTile(cs),
                     _buildSectionHeader('Account', cs),
                     _buildChangePasswordTile(),
                     _buildSectionHeader('Support', cs),
@@ -309,6 +310,19 @@ class _SettingsScreenState extends State<SettingsScreen>
         // but refresh immediately too in case the OS doesn't fire a
         // lifecycle event on this particular device.
         _refreshNotificationStatus();
+      },
+    );
+  }
+
+  Widget _buildTestAlertTile(ColorScheme cs) {
+    return ListTile(
+      leading: Icon(Icons.campaign_outlined, color: cs.primary),
+      title: const Text('Test order alert'),
+      subtitle: const Text('Sends a loud test alert in 10 seconds. Lock your phone to check it wakes up.'),
+      onTap: () async {
+        final msg = await PushNotificationService.sendTestAlert();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       },
     );
   }
