@@ -629,20 +629,22 @@ class _OutletsScreenState extends State<OutletsScreen> {
           'Are you sure you want to delete "${outlet.outletName}"? This action cannot be undone.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _deleteOutlet(outlet.outletId);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+          ButtonPair(
+            secondary: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            child: const Text('Delete'),
+            primary: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteOutlet(outlet.outletId);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
           ),
         ],
       ),
@@ -1022,17 +1024,19 @@ class _OutletFormDialogState extends State<OutletFormDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _save,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            foregroundColor: Colors.white,
+        ButtonPair(
+          secondary: OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-          child: Text(widget.outlet == null ? 'Create' : 'Save'),
+          primary: ElevatedButton(
+            onPressed: _save,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(widget.outlet == null ? 'Create' : 'Save'),
+          ),
         ),
       ],
     );

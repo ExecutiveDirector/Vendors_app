@@ -8,6 +8,7 @@
 //     this vendor's catalog.
 
 import 'package:flutter/material.dart';
+import '../../../core/widgets/shared_widgets.dart';
 import '../data/wholesaler_sync_models.dart';
 import '../data/wholesaler_sync_service.dart';
 
@@ -267,28 +268,26 @@ class _StagingItemCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: busy ? null : onReject,
-                  icon: const Icon(Icons.close, size: 18, color: Colors.red),
-                  label: const Text('Reject', style: TextStyle(color: Colors.red)),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: busy ? null : onApprove,
-                  icon: busy
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.check, size: 18),
-                  label: const Text('Approve'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                ),
-              ],
+            ButtonPair(
+              secondary: OutlinedButton.icon(
+                onPressed: busy ? null : onReject,
+                icon: const Icon(Icons.close, size: 18, color: Colors.red),
+                label: const Text('Reject', style: TextStyle(color: Colors.red)),
+                style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.red)),
+              ),
+              primary: ElevatedButton.icon(
+                onPressed: busy ? null : onApprove,
+                icon: busy
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.check, size: 18),
+                label: const Text('Approve'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              ),
             ),
           ],
         ),
@@ -405,8 +404,14 @@ class _SourcesTabState extends State<_SourcesTab> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Register')),
+          ButtonPair(
+            secondary: OutlinedButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel')),
+            primary: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Register')),
+          ),
         ],
       ),
     );

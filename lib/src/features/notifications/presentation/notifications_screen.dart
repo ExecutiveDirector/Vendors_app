@@ -538,16 +538,18 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         title: const Text('Delete Notification'),
         content: const Text('Delete this notification?'),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              Navigator.pop(context);
-              _deleteNotification(n.notificationId);
-            },
-            child: const Text('Delete'),
+          ButtonPair(
+            secondary: OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel')),
+            primary: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteNotification(n.notificationId);
+              },
+              child: const Text('Delete'),
+            ),
           ),
         ],
       ),
@@ -581,20 +583,22 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           ),
         ]),
         actions: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _selectedType = 'all';
-                _selectedPriority = 'all';
-                _showUnreadOnly = false;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Clear'),
+          ButtonPair(
+            secondary: OutlinedButton(
+              onPressed: () {
+                setState(() {
+                  _selectedType = 'all';
+                  _selectedPriority = 'all';
+                  _showUnreadOnly = false;
+                });
+                Navigator.pop(context);
+              },
+              child: const Text('Clear'),
+            ),
+            primary: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Apply')),
           ),
-          ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Apply')),
         ],
       ),
     );

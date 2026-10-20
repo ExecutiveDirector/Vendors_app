@@ -218,6 +218,38 @@ class InfoTile extends StatelessWidget {
   }
 }
 
+/// Two buttons side by side, sharing the width equally (never stacked).
+///
+/// Use this wherever a screen, sheet or dialog offers a pair of actions, e.g.
+/// Cancel / Confirm or Decline / Accept. [secondary] goes on the left and
+/// [primary] on the right. Raise [primaryFlex] to give the main action more
+/// room than the secondary one.
+class ButtonPair extends StatelessWidget {
+  final Widget secondary;
+  final Widget primary;
+  final int primaryFlex;
+  final double gap;
+
+  const ButtonPair({
+    super.key,
+    required this.secondary,
+    required this.primary,
+    this.primaryFlex = 1,
+    this.gap = 12,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: secondary),
+        SizedBox(width: gap),
+        Expanded(flex: primaryFlex, child: primary),
+      ],
+    );
+  }
+}
+
 Future<bool?> showConfirmDialog(BuildContext context,
     {required String title,
     required String content,
@@ -229,16 +261,18 @@ Future<bool?> showConfirmDialog(BuildContext context,
       title: Text(title),
       content: Text(content),
       actions: [
-        TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel')),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                confirmColor ?? Theme.of(context).colorScheme.primary,
+        ButtonPair(
+          secondary: OutlinedButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          primary: ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  confirmColor ?? Theme.of(context).colorScheme.primary,
+            ),
+            child: Text(confirmLabel ?? 'Confirm'),
           ),
-          child: Text(confirmLabel ?? 'Confirm'),
         ),
       ],
     ),
@@ -295,14 +329,17 @@ Future<String?> askCancelReason(BuildContext context,
           ),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Keep order')),
-          ElevatedButton(
-            onPressed: ctrl.text.trim().length >= 3
-                ? () => Navigator.pop(ctx, ctrl.text.trim())
-                : null,
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Cancel order'),
+          ButtonPair(
+            secondary: OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Keep order')),
+            primary: ElevatedButton(
+              onPressed: ctrl.text.trim().length >= 3
+                  ? () => Navigator.pop(ctx, ctrl.text.trim())
+                  : null,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Cancel order'),
+            ),
           ),
         ],
       ),
