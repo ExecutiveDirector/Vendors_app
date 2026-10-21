@@ -307,10 +307,12 @@ class _FaqSheetState extends State<_FaqSheet> {
   Future<void> _load() async {
     try {
       final faqs = await SupportApi.faq();
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _faqs = faqs;
         _loading = false;
       });
+      }
     } catch (e) {
       if (mounted) setState(() => _loading = false);
     }

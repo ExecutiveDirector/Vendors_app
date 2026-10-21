@@ -92,15 +92,19 @@ class _ReviewQueueTabState extends State<_ReviewQueueTab> {
     });
     try {
       final items = await widget.service.fetchStagingItems();
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _items = items;
         _loading = false;
       });
+      }
     } catch (e) {
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _error = e.toString();
         _loading = false;
       });
+      }
     }
   }
 
@@ -217,7 +221,7 @@ class _StagingItemCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.border),
+        side: const BorderSide(color: AppColors.border),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -244,18 +248,18 @@ class _StagingItemCard extends StatelessWidget {
             Text(
               '${item.extractedSize ?? '—'} · Wholesale cost KES ${item.wholesaleCost.toStringAsFixed(0)}'
               '${item.computedRetailPrice != null ? ' → Retail KES ${item.computedRetailPrice!.toStringAsFixed(0)}' : ''}',
-              style: TextStyle(color: AppColors.muted, fontSize: 13),
+              style: const TextStyle(color: AppColors.muted, fontSize: 13),
             ),
             if (item.reviewReason != null) ...[
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.warning),
+                  const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.warning),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       item.friendlyReviewReason,
-                      style: TextStyle(color: AppColors.warning, fontSize: 12),
+                      style: const TextStyle(color: AppColors.warning, fontSize: 12),
                     ),
                   ),
                 ],
@@ -265,7 +269,7 @@ class _StagingItemCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 'Suggested category: ${item.suggestedCategoryName}',
-                style: TextStyle(color: AppColors.muted, fontSize: 12),
+                style: const TextStyle(color: AppColors.muted, fontSize: 12),
               ),
             ],
             const SizedBox(height: 10),
@@ -341,10 +345,12 @@ class _SourcesTabState extends State<_SourcesTab> {
     setState(() => _loading = true);
     try {
       final sources = await widget.service.fetchSources();
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _sources = sources;
         _loading = false;
       });
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _loading = false);
@@ -467,7 +473,7 @@ class _SourcesTabState extends State<_SourcesTab> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: AppColors.border),
+                          side: const BorderSide(color: AppColors.border),
                         ),
                         child: ListTile(
                           title: Text(s.sourceLabel ?? s.whatsappGroupJid),

@@ -7,7 +7,7 @@ import 'services/local_storage.dart';
 // and AppTheme.dark directly.
 
 /// Global router instance used by MaterialApp.router
-late final appRouter = createRouter();
+final appRouter = createRouter();
 
 Future<void> bootstrap() async {
   await Hive.initFlutter();

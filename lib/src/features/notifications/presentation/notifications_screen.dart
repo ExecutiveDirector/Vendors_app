@@ -11,7 +11,6 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../core/services/notification_watcher_service.dart'
@@ -203,7 +202,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline, size: 64, color: AppColors.danger),
+              const Icon(Icons.error_outline, size: 64, color: AppColors.danger),
               const SizedBox(height: 16),
               Text(friendlyError(_error), textAlign: TextAlign.center),
               const SizedBox(height: 16),
@@ -356,10 +355,10 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
   Widget _buildList(List<NotificationItem> items) {
     if (items.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.notifications_none, size: 64, color: AppColors.muted),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text('No notifications', style: TextStyle(color: AppColors.muted)),
         ]),
       );
@@ -421,7 +420,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                       const SizedBox(height: 4),
                       Text(n.message,
                           style:
-                              TextStyle(color: AppColors.muted, fontSize: 14),
+                              const TextStyle(color: AppColors.muted, fontSize: 14),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis),
                     ]),
@@ -431,7 +430,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                   if (v == 'mark_read') _markAsRead(n.notificationId);
                   if (v == 'delete') _confirmDelete(n);
                 },
-                child: Icon(Icons.more_vert, color: AppColors.muted),
+                child: const Icon(Icons.more_vert, color: AppColors.muted),
                 itemBuilder: (_) => [
                   if (!n.isRead)
                     const PopupMenuItem(
@@ -459,7 +458,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               _chip(n.priority.toUpperCase(), _priorityColor(n.priority)),
               const Spacer(),
               Text(_timeAgo(n.createdAt),
-                  style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                  style: const TextStyle(color: AppColors.muted, fontSize: 12)),
             ]),
           ]),
         ),

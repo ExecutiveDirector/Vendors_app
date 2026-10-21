@@ -24,7 +24,6 @@
 // in (once an auth token exists, since the registration call needs one).
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui';
 import 'package:dio/dio.dart' show DioException;
 import 'package:flutter/foundation.dart';

@@ -182,7 +182,7 @@ class ImagePickerService {
         return ImageValidationResult(
           isValid: false,
           errorMessage:
-              'File too large (${sizeMB.toStringAsFixed(2)} MB). Max: ${maxSizeMB} MB',
+              'File too large (${sizeMB.toStringAsFixed(2)} MB). Max: $maxSizeMB MB',
         );
       }
 

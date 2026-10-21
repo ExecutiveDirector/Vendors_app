@@ -77,11 +77,12 @@ class _OrdersScreenState extends State<OrdersScreen>
     }
     try {
       final data = await OrdersApi.list();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _all = data;
           _loading = false;
         });
+      }
     } catch (e) {
       if (mounted && !silent) {
         setState(() {
@@ -271,10 +272,10 @@ class _OrderCard extends StatelessWidget {
             ]),
             const SizedBox(height: 8),
             Row(children: [
-              Icon(Icons.access_time, size: 14, color: AppColors.muted),
+              const Icon(Icons.access_time, size: 14, color: AppColors.muted),
               const SizedBox(width: 4),
               Text(_formatDate(order.createdAt),
-                  style: TextStyle(fontSize: 12, color: AppColors.muted)),
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted)),
               const Spacer(),
               // FIX: totalAmount is already a double from Order.fromJson — safe to use directly
               Text('KES ${order.totalAmount.toStringAsFixed(0)}',
@@ -287,13 +288,13 @@ class _OrderCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Row(children: [
-                  Icon(Icons.location_on_outlined,
+                  const Icon(Icons.location_on_outlined,
                       size: 14, color: AppColors.muted),
                   const SizedBox(width: 4),
                   Expanded(
                       child: Text(
                     order.deliveryAddress ?? order.deliveryContact ?? '',
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: const TextStyle(fontSize: 12, color: AppColors.muted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   )),
@@ -348,14 +349,14 @@ class _OrderCard extends StatelessWidget {
                   order.items
                       .map((i) => '${i.quantity}× ${i.productName}')
                       .join(', '),
-                  style: TextStyle(fontSize: 12, color: AppColors.muted),
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             if (waitingPayment)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
                 child: Text('Waiting for the customer to pay',
                     style: TextStyle(fontSize: 12, color: AppColors.warning)),
               ),

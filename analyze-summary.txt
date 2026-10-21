@@ -1,0 +1,3 @@
+   info • Use 'const' with the constructor to improve performance • lib/src/features/wholesaler_sync/presentation/wholesaler_sync_screen.dart:470:33 • prefer_const_constructors
+
+93 issues found. (ran in 13.6s)
