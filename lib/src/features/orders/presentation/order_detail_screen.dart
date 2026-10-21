@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../data/order_model.dart';
 import '../data/orders_api.dart';
 import '../../../core/widgets/shared_widgets.dart';
+import '../../../core/theme.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final String id;
@@ -50,11 +51,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Status updated to $status'),
-            backgroundColor: Colors.teal));
+            backgroundColor: AppColors.primary));
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+            SnackBar(content: Text(friendlyError(e)), backgroundColor: AppColors.danger));
     }
   }
 
@@ -65,7 +66,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         leading: const AppBackButton(),
         title: Text(_order != null ? _order!.orderNumber : 'Order Details'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _load)
+          IconButton(
+              tooltip: 'Refresh',
+              icon: const Icon(Icons.refresh),
+              onPressed: _load)
         ],
       ),
       body: _loading
@@ -105,7 +109,7 @@ class _OrderDetail extends StatelessWidget {
     // FIX: totalAmount and deliveryFee are already doubles from Order.fromJson
     final subtotal = order.totalAmount - order.deliveryFee;
 
-    return ListView(
+    final content = ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Card(
@@ -124,7 +128,7 @@ class _OrderDetail extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(_formatDate(order.createdAt),
                           style: const TextStyle(
-                              color: Colors.grey, fontSize: 13)),
+                              color: AppColors.muted, fontSize: 13)),
                     ])),
                 StatusBadge(status: order.orderStatus),
               ]),
@@ -143,7 +147,7 @@ class _OrderDetail extends StatelessWidget {
                 _AmountBox(
                     label: 'Total',
                     value: 'KES ${order.totalAmount.toStringAsFixed(0)}',
-                    color: cs.primary.withOpacity(0.12),
+                    color: cs.primary.withValues(alpha: 0.12),
                     bold: true),
               ]),
               const SizedBox(height: 12),
@@ -153,20 +157,20 @@ class _OrderDetail extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: order.paymentStatus == 'paid'
-                        ? Colors.green.shade50
-                        : Colors.orange.shade50,
+                        ? AppColors.successSoft
+                        : AppColors.warningSoft,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                         color: order.paymentStatus == 'paid'
-                            ? Colors.green
-                            : Colors.orange),
+                            ? AppColors.success
+                            : AppColors.warning),
                   ),
                   child: Text('Payment: ${order.paymentStatus}',
                       style: TextStyle(
                         fontSize: 12,
                         color: order.paymentStatus == 'paid'
-                            ? Colors.green.shade700
-                            : Colors.orange.shade700,
+                            ? AppColors.success
+                            : AppColors.warning,
                         fontWeight: FontWeight.w600,
                       )),
                 ),
@@ -192,7 +196,7 @@ class _OrderDetail extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                        color: cs.primary.withOpacity(0.1),
+                        color: cs.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8)),
                     alignment: Alignment.center,
                     child: Text('${item.quantity}×',
@@ -209,7 +213,7 @@ class _OrderDetail extends StatelessWidget {
                                 const TextStyle(fontWeight: FontWeight.w500)),
                         Text('KES ${item.unitPrice.toStringAsFixed(0)} each',
                             style: const TextStyle(
-                                fontSize: 12, color: Colors.grey)),
+                                fontSize: 12, color: AppColors.muted)),
                       ])),
                   Text('KES ${item.totalPrice.toStringAsFixed(0)}',
                       style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -231,7 +235,14 @@ class _OrderDetail extends StatelessWidget {
             InfoTile(
                 icon: Icons.phone_outlined,
                 label: 'Contact',
-                value: order.deliveryContact!),
+                value: order.deliveryContact!,
+                trailing: looksLikePhone(order.deliveryContact!)
+                    ? IconButton.filledTonal(
+                        tooltip: 'Call customer',
+                        icon: const Icon(Icons.call),
+                        onPressed: () => callNumber(context, order.deliveryContact!),
+                      )
+                    : null),
           if (order.riderName != null)
             InfoTile(
                 icon: Icons.delivery_dining,
@@ -263,32 +274,96 @@ class _OrderDetail extends StatelessWidget {
             padding: EdgeInsets.only(top: 4),
             child: Text(
                 'A rider is assigned. They confirm pickup and delivery in their app.',
-                style: TextStyle(color: Colors.grey, fontSize: 13)),
+                style: TextStyle(color: AppColors.muted, fontSize: 13)),
           ),
-        if (_allowedNext.isNotEmpty) ...[
-          const Text('Update Status',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: Colors.grey)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _allowedNext
-                .map((s) => ActionChip(
-                      label: Text(_capitalize(s)),
-                      onPressed: () => _confirmStatus(context, s),
-                      backgroundColor:
-                          s == 'canceled' ? Colors.red.shade50 : null,
-                      labelStyle:
-                          TextStyle(color: s == 'canceled' ? Colors.red : null),
-                    ))
-                .toList(),
-          ),
-          const SizedBox(height: 32),
-        ],
+        const SizedBox(height: 24),
       ],
+    );
+
+    return Column(
+      children: [
+        Expanded(child: content),
+        if (_allowedNext.isNotEmpty) _buildActionBar(context),
+      ],
+    );
+  }
+
+  static const _actionLabels = {
+    'confirmed': 'Accept order',
+    'preparing': 'Start preparing',
+    'ready': 'Mark ready',
+    'dispatched': 'Dispatch',
+    'canceled': 'Cancel order',
+  };
+
+  /// Sticky bottom bar: the main next step is always one tap away, cancel is
+  /// kept apart on the left, and any alternative forward steps sit above.
+  Widget _buildActionBar(BuildContext context) {
+    final forward = _allowedNext.where((s) => s != 'canceled').toList();
+    final canCancel = _allowedNext.contains('canceled');
+    final main = forward.isNotEmpty ? forward.first : null;
+    final others = forward.length > 1 ? forward.sublist(1) : const <String>[];
+
+    final cancelBtn = OutlinedButton(
+      onPressed: () => _confirmStatus(context, 'canceled'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.danger,
+        side: const BorderSide(color: AppColors.danger, width: 1.5),
+      ),
+      child: const Text('Cancel order'),
+    );
+
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      elevation: 8,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (others.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      const Text('Or:',
+                          style: TextStyle(color: AppColors.muted)),
+                      for (final s in others)
+                        ActionChip(
+                          label: Text(_actionLabels[s] ?? _capitalize(s)),
+                          onPressed: () => _confirmStatus(context, s),
+                        ),
+                    ],
+                  ),
+                ),
+              if (main != null && canCancel)
+                ButtonPair(
+                  primaryFlex: 2,
+                  secondary: cancelBtn,
+                  primary: ElevatedButton(
+                    onPressed: () => _confirmStatus(context, main),
+                    child: Text(_actionLabels[main] ?? _capitalize(main)),
+                  ),
+                )
+              else if (main != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => _confirmStatus(context, main),
+                    child: Text(_actionLabels[main] ?? _capitalize(main)),
+                  ),
+                )
+              else
+                SizedBox(width: double.infinity, child: cancelBtn),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -303,7 +378,7 @@ class _OrderDetail extends StatelessWidget {
         title: 'Update Status',
         content: 'Change order to "${_capitalize(status)}"?',
         confirmLabel: 'Update',
-        confirmColor: status == 'canceled' ? Colors.red : null);
+        confirmColor: status == 'canceled' ? AppColors.danger : null);
     if (ok == true) onUpdateStatus(status);
   }
 
@@ -338,7 +413,7 @@ class _AmountBox extends StatelessWidget {
         decoration:
             BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
         child: Column(children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
           const SizedBox(height: 2),
           Text(value,
               style: TextStyle(

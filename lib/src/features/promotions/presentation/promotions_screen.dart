@@ -58,6 +58,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
         title: const Text('Promotions'),
         actions: [
           IconButton(
+            tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
             onPressed: _load,
             tooltip: 'Refresh',
@@ -77,7 +78,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                         padding: const EdgeInsets.all(14),
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: cs.primary.withOpacity(0.08),
+                          color: cs.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -93,7 +94,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                                 'apply to your store.',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: cs.onSurface.withOpacity(0.75),
+                                  color: cs.onSurface.withValues(alpha: 0.75),
                                 ),
                               ),
                             ),
@@ -131,7 +132,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: cs.primary.withOpacity(0.12),
+                                          color: cs.primary.withValues(alpha: 0.12),
                                           borderRadius:
                                               BorderRadius.circular(8),
                                         ),
@@ -171,7 +172,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                                         : 'Valid until ${promo.validTo != null ? dateFmt.format(promo.validTo!) : 'further notice'}',
                                     style: TextStyle(
                                       fontSize: 12.5,
-                                      color: cs.onSurface.withOpacity(0.6),
+                                      color: cs.onSurface.withValues(alpha: 0.6),
                                     ),
                                   ),
                                   if (usagePct != null) ...[
@@ -182,7 +183,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                                         value: usagePct,
                                         minHeight: 6,
                                         backgroundColor:
-                                            cs.primary.withOpacity(0.1),
+                                            cs.primary.withValues(alpha: 0.1),
                                         color: cs.primary,
                                       ),
                                     ),
@@ -191,7 +192,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
                                       '${promo.currentUsageCount} / ${promo.totalUsageLimit} uses',
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: cs.onSurface.withOpacity(0.5),
+                                        color: cs.onSurface.withValues(alpha: 0.5),
                                       ),
                                     ),
                                   ],

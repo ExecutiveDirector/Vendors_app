@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/analytics_api.dart';
 import '../../../core/widgets/shared_widgets.dart';
+import '../../../core/theme.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -50,6 +51,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         title: const Text('Analytics'),
         actions: [
           IconButton(
+            tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
             onPressed: () {
               setState(() {
@@ -96,13 +98,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             label: 'Revenue',
                             value: _formatCurrency(_summary?.revenue ?? 0),
                             icon: Icons.attach_money,
-                            color: Colors.green,
+                            color: AppColors.success,
                           ),
                           _StatCard(
                             label: 'Period',
                             value: (_summary?.period ?? 'month').toUpperCase(),
                             icon: Icons.calendar_month,
-                            color: Colors.orange,
+                            color: AppColors.warning,
                           ),
                           _StatCard(
                             label: 'Start Date',
@@ -366,7 +368,7 @@ class _ErrorView extends StatelessWidget {
             const Icon(
               Icons.error_outline,
               size: 48,
-              color: Colors.red,
+              color: AppColors.danger,
             ),
             const SizedBox(height: 12),
             Text(

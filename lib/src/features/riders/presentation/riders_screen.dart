@@ -79,6 +79,7 @@ class _RidersScreenState extends State<RidersScreen> {
         title: const Text('Riders'),
         actions: [
           IconButton(
+            tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
             onPressed: _load,
             tooltip: 'Refresh',
@@ -116,7 +117,7 @@ class _RidersScreenState extends State<RidersScreen> {
                                 children: [
                                   CircleAvatar(
                                     radius: 24,
-                                    backgroundColor: cs.primary.withOpacity(0.12),
+                                    backgroundColor: cs.primary.withValues(alpha: 0.12),
                                     child: Icon(
                                       _vehicleIcon(rider.vehicleType),
                                       color: cs.primary,
@@ -148,7 +149,7 @@ class _RidersScreenState extends State<RidersScreen> {
                                           '${rider.vehicleType.replaceAll('_', ' ')} • ${rider.rating.toStringAsFixed(1)} ★ • ${rider.totalDeliveries} deliveries',
                                           style: TextStyle(
                                             fontSize: 12.5,
-                                            color: cs.onSurface.withOpacity(0.6),
+                                            color: cs.onSurface.withValues(alpha: 0.6),
                                           ),
                                         ),
                                         const SizedBox(height: 8),

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import 'dart:convert';
+import '../../../core/theme.dart';
 
 class OutletsScreen extends StatefulWidget {
   const OutletsScreen({super.key});
@@ -67,7 +68,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Outlet created successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
             ),
           );
         }
@@ -77,7 +78,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${_formatDioError(e)}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger,
           ),
         );
       }
@@ -97,7 +98,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Outlet updated successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
             ),
           );
         }
@@ -107,7 +108,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${_formatDioError(e)}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger,
           ),
         );
       }
@@ -124,7 +125,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Outlet deleted successfully'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
       }
@@ -133,7 +134,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${_formatDioError(e)}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger,
           ),
         );
       }
@@ -168,7 +169,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+              Icon(Icons.error_outline, size: 64, color: AppColors.danger),
               const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -190,13 +191,14 @@ class _OutletsScreenState extends State<OutletsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.subtle,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text('Outlet Management'),
         elevation: 0.5,
         actions: [
           IconButton(
+            tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
             onPressed: _loadOutlets,
           ),
@@ -226,16 +228,16 @@ class _OutletsScreenState extends State<OutletsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.store_outlined, size: 64, color: Colors.grey[400]),
+            Icon(Icons.store_outlined, size: 64, color: AppColors.muted),
             const SizedBox(height: 16),
             Text(
               'No outlets found',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 18, color: AppColors.muted),
             ),
             const SizedBox(height: 8),
             Text(
               'Add your first outlet to get started',
-              style: TextStyle(color: Colors.grey[500]),
+              style: TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -243,7 +245,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
               icon: const Icon(Icons.add_location_alt),
               label: const Text('Add Outlet'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.success,
                 foregroundColor: Colors.white,
               ),
             ),
@@ -282,11 +284,11 @@ class _OutletsScreenState extends State<OutletsScreen> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: AppColors.info.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
                   ),
-                  child: Icon(Icons.store, color: Colors.blue[600], size: 28),
+                  child: Icon(Icons.store, color: AppColors.info, size: 28),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -309,7 +311,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: isOpen ? Colors.green : Colors.red,
+                                color: isOpen ? AppColors.success : AppColors.danger,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -327,7 +329,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                       Text(
                         'Code: ${outlet.outletCode}',
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: AppColors.muted,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -336,13 +338,13 @@ class _OutletsScreenState extends State<OutletsScreen> {
                       Row(
                         children: [
                           Icon(Icons.location_on,
-                              size: 16, color: Colors.grey[600]),
+                              size: 16, color: AppColors.muted),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               _formatAddress(outlet),
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: AppColors.muted,
                                 fontSize: 13,
                               ),
                               maxLines: 2,
@@ -384,9 +386,9 @@ class _OutletsScreenState extends State<OutletsScreen> {
                     const PopupMenuItem(
                       value: 'delete',
                       child: Row(children: [
-                        Icon(Icons.delete, size: 18, color: Colors.red),
+                        Icon(Icons.delete, size: 18, color: AppColors.danger),
                         SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: Colors.red)),
+                        Text('Delete', style: TextStyle(color: AppColors.danger)),
                       ]),
                     ),
                   ],
@@ -396,7 +398,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
             const SizedBox(height: 16),
             if (outlet.contactPhone != null) ...[
               Row(children: [
-                Icon(Icons.phone, size: 16, color: Colors.grey[600]),
+                Icon(Icons.phone, size: 16, color: AppColors.muted),
                 const SizedBox(width: 8),
                 Text(outlet.contactPhone!,
                     style: const TextStyle(fontWeight: FontWeight.w500)),
@@ -405,7 +407,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
             ],
             if (outlet.managerName != null) ...[
               Row(children: [
-                Icon(Icons.person, size: 16, color: Colors.grey[600]),
+                Icon(Icons.person, size: 16, color: AppColors.muted),
                 const SizedBox(width: 8),
                 Text('Manager: ${outlet.managerName}',
                     style: const TextStyle(fontWeight: FontWeight.w500)),
@@ -414,7 +416,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
             ],
             if (operatingHours != null) ...[
               Row(children: [
-                Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                Icon(Icons.access_time, size: 16, color: AppColors.muted),
                 const SizedBox(width: 8),
                 Text(
                   _getCurrentDayHours(operatingHours),
@@ -450,7 +452,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                   icon: const Icon(Icons.edit, size: 18),
                   label: const Text('Edit'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: AppColors.success,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
@@ -467,14 +469,14 @@ class _OutletsScreenState extends State<OutletsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: AppColors.info.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+        border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
       ),
       child: Text(
         facility,
         style: TextStyle(
-          color: Colors.blue[700],
+          color: AppColors.info,
           fontSize: 11,
           fontWeight: FontWeight.w500,
         ),
@@ -640,7 +642,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                 _deleteOutlet(outlet.outletId);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: AppColors.danger,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Delete'),
@@ -1014,7 +1016,7 @@ class _OutletFormDialogState extends State<OutletFormDialog> {
                   'Tip: Defaults to Nairobi CBD coordinates',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey[500],
+                    color: AppColors.muted,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -1032,7 +1034,7 @@ class _OutletFormDialogState extends State<OutletFormDialog> {
           primary: ElevatedButton(
             onPressed: _save,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
               foregroundColor: Colors.white,
             ),
             child: Text(widget.outlet == null ? 'Create' : 'Save'),
@@ -1098,7 +1100,7 @@ class OutletDetailsDialog extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 11,
-                color: Colors.grey,
+                color: AppColors.muted,
               ),
             ),
           const SizedBox(height: 2),

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../data/support_api.dart';
 import 'ticket_detail_screen.dart';
+import '../../../core/theme.dart';
 
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
@@ -118,7 +119,7 @@ class _SupportScreenState extends State<SupportScreen> {
                                 _load();
                               },
                               leading: CircleAvatar(
-                                backgroundColor: cs.primary.withOpacity(0.12),
+                                backgroundColor: cs.primary.withValues(alpha: 0.12),
                                 child: Icon(Icons.confirmation_number_outlined,
                                     color: cs.primary, size: 20),
                               ),
@@ -225,7 +226,7 @@ class _NewTicketSheetState extends State<_NewTicketSheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -261,7 +262,7 @@ class _NewTicketSheetState extends State<_NewTicketSheet> {
               if (_error != null) ...[
                 const SizedBox(height: 10),
                 Text(_error!,
-                    style: const TextStyle(color: Colors.red, fontSize: 13)),
+                    style: const TextStyle(color: AppColors.danger, fontSize: 13)),
               ],
               const SizedBox(height: 16),
               SizedBox(
@@ -340,7 +341,7 @@ class _FaqSheetState extends State<_FaqSheet> {
                         height: 4,
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: AppColors.border,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),

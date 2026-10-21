@@ -50,8 +50,6 @@ Future<void> main() async {
 
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.dark,
-    statusBarBrightness: Brightness.light,
   ));
 
   await bootstrap();
@@ -86,6 +84,18 @@ class VendorApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
       routerConfig: appRouter,
+      // Respect the user's font-size setting, but cap it so layouts stay
+      // usable at the extremes (and never shrink below a readable size).
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          data: mq.copyWith(
+            textScaler: mq.textScaler
+                .clamp(minScaleFactor: 0.9, maxScaleFactor: 1.4),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

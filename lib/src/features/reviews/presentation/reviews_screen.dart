@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/widgets/shared_widgets.dart';
 import '../data/reviews_api.dart';
+import '../../../core/theme.dart';
 
 class ReviewsScreen extends StatefulWidget {
   const ReviewsScreen({super.key});
@@ -67,7 +68,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         return Icon(
           i < rating.round() ? Icons.star_rounded : Icons.star_border_rounded,
           size: size,
-          color: Colors.amber[600],
+          color: AppColors.warning,
         );
       }),
     );
@@ -84,6 +85,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         title: const Text('Reviews'),
         actions: [
           IconButton(
+            tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
             onPressed: _load,
             tooltip: 'Refresh',
@@ -105,7 +107,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                           padding: const EdgeInsets.all(18),
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                            color: cs.primary.withOpacity(0.08),
+                            color: cs.primary.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Column(
@@ -125,7 +127,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                                 '${_reviews.length} review${_reviews.length == 1 ? '' : 's'}',
                                 style: TextStyle(
                                   fontSize: 12.5,
-                                  color: cs.onSurface.withOpacity(0.6),
+                                  color: cs.onSurface.withValues(alpha: 0.6),
                                 ),
                               ),
                             ],
@@ -157,7 +159,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                                         style: TextStyle(
                                           fontSize: 11.5,
                                           color:
-                                              cs.onSurface.withOpacity(0.5),
+                                              cs.onSurface.withValues(alpha: 0.5),
                                         ),
                                       ),
                                     ],
@@ -186,7 +188,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                                       width: double.infinity,
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
-                                        color: Colors.grey[100],
+                                        color: AppColors.subtle,
                                         borderRadius:
                                             BorderRadius.circular(10),
                                       ),
@@ -302,7 +304,7 @@ class _ReplySheetState extends State<_ReplySheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -314,7 +316,7 @@ class _ReplySheetState extends State<_ReplySheet> {
                 Text(
                   '"${widget.review.reviewText}"',
                   style: const TextStyle(
-                      fontSize: 13, fontStyle: FontStyle.italic, color: Colors.grey),
+                      fontSize: 13, fontStyle: FontStyle.italic, color: AppColors.muted),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -331,7 +333,7 @@ class _ReplySheetState extends State<_ReplySheet> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 10),
-                Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
               ],
               const SizedBox(height: 16),
               SizedBox(

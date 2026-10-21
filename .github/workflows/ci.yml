@@ -1,0 +1,30 @@
+name: CI
+
+# Compiles and checks every pull request before it can reach main (and from
+# there, vendors' phones via the Firebase distribution workflow).
+on:
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Errors fail the build. Info-level lints are reported but tolerated so
+      # the existing codebase can be cleaned up gradually.
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test
+        run: flutter test

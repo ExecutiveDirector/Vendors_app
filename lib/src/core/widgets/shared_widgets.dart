@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../theme.dart';
 
 /// Standard back button for every feature-screen AppBar.
 ///
@@ -30,6 +32,58 @@ class AppBackButton extends StatelessWidget {
   }
 }
 
+/// Turns any thrown error into a sentence a vendor can act on, instead of
+/// showing raw exception text such as "DioException [connection error]".
+String friendlyError(Object? error) {
+  final raw = (error ?? '').toString();
+  final t = raw.toLowerCase();
+  if (t.contains('socketexception') ||
+      t.contains('connection error') ||
+      t.contains('connection refused') ||
+      t.contains('failed host lookup') ||
+      t.contains('network is unreachable')) {
+    return 'No internet connection. Check your data or Wi-Fi and try again.';
+  }
+  if (t.contains('timeout') || t.contains('timed out')) {
+    return 'The server is taking too long to respond. Please try again.';
+  }
+  if (t.contains('401') || t.contains('unauthorized')) {
+    return 'Your session has expired. Please sign in again.';
+  }
+  if (t.contains('403') || t.contains('forbidden')) {
+    return 'You do not have permission to do that.';
+  }
+  if (t.contains('404') || t.contains('not found')) {
+    return 'We could not find what you were looking for.';
+  }
+  if (RegExp(r'\b5\d\d\b').hasMatch(t)) {
+    return 'Something went wrong on our side. Please try again shortly.';
+  }
+  // Short messages written for people (e.g. "Out of stock") pass through.
+  if (!t.contains('dioexception') && !t.contains('stack') && raw.length < 140) {
+    final cleaned = raw.replaceFirst('Exception: ', '').trim();
+    if (cleaned.isNotEmpty) return cleaned;
+  }
+  return 'Something went wrong. Please try again.';
+}
+
+/// True when [value] looks like a dialable phone number.
+bool looksLikePhone(String value) {
+  final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+  return digits.length >= 9 && digits.length <= 15;
+}
+
+/// Opens the phone dialer for [number]; shows a snackbar if it cannot.
+Future<void> callNumber(BuildContext context, String number) async {
+  final cleaned = number.replaceAll(RegExp(r'[^0-9+]'), '');
+  final ok = await launchUrl(Uri(scheme: 'tel', path: cleaned));
+  if (!ok && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Could not open the phone dialer.')),
+    );
+  }
+}
+
 class AppEmpty extends StatelessWidget {
   final String message;
   final IconData icon;
@@ -47,15 +101,25 @@ class AppEmpty extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 64, color: cs.onSurface.withOpacity(0.3)),
-          const SizedBox(height: 16),
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 44, color: cs.primary),
+          ),
+          const SizedBox(height: 20),
           Text(message,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: cs.onSurface.withOpacity(0.6), fontSize: 15)),
+                  color: cs.onSurface.withValues(alpha: 0.75),
+                  fontSize: 15,
+                  height: 1.4)),
           if (onAction != null) ...[
             const SizedBox(height: 20),
             ElevatedButton(
@@ -67,6 +131,7 @@ class AppEmpty extends StatelessWidget {
   }
 }
 
+/// Error state. Pass the raw error or message; it is shown in plain language.
 class AppError extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
@@ -75,10 +140,10 @@ class AppError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppEmpty(
-      icon: Icons.error_outline,
-      message: message,
+      icon: Icons.cloud_off_outlined,
+      message: friendlyError(message),
       onAction: onRetry,
-      actionLabel: 'Retry',
+      actionLabel: 'Try again',
     );
   }
 }
@@ -101,40 +166,116 @@ class AppLoading extends StatelessWidget {
   }
 }
 
+/// A softly pulsing placeholder block used while content loads.
+class SkeletonBox extends StatefulWidget {
+  final double? width;
+  final double height;
+  final double radius;
+  const SkeletonBox({super.key, this.width, this.height = 14, this.radius = 8});
+
+  @override
+  State<SkeletonBox> createState() => _SkeletonBoxState();
+}
+
+class _SkeletonBoxState extends State<SkeletonBox>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, _) => Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: Color.lerp(
+              const Color(0x1A808A9C), const Color(0x33808A9C), _c.value),
+          borderRadius: BorderRadius.circular(widget.radius),
+        ),
+      ),
+    );
+  }
+}
+
+/// Placeholder list of card-shaped skeletons; use instead of a bare spinner.
+class SkeletonList extends StatelessWidget {
+  final int count;
+  const SkeletonList({super.key, this.count = 5});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(AppSpacing.screen),
+      itemCount: count,
+      itemBuilder: (_, __) => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                SkeletonBox(width: 120, height: 16),
+                Spacer(),
+                SkeletonBox(width: 64, height: 22, radius: 11),
+              ]),
+              SizedBox(height: 12),
+              SkeletonBox(height: 12),
+              SizedBox(height: 8),
+              SkeletonBox(width: 180, height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Thin banner shown when data on screen came from the offline cache.
+class OfflineBanner extends StatelessWidget {
+  final String message;
+  const OfflineBanner(
+      {super.key,
+      this.message = 'You are offline. Showing your last saved orders.'});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        color: AppColors.warningSoft,
+        child: Row(children: [
+          const Icon(Icons.wifi_off_rounded,
+              size: 18, color: AppColors.warning),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(message,
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600)),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
 class StatusBadge extends StatelessWidget {
   final String status;
   const StatusBadge({super.key, required this.status});
 
-  Color _color(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return Colors.orange;
-      case 'confirmed':
-        return Colors.blue;
-      case 'preparing':
-      case 'processing':
-        return Colors.purple;
-      case 'ready':
-        return Colors.teal;
-      case 'dispatched':
-      case 'in_transit':
-        return Colors.indigo;
-      case 'delivered':
-        return Colors.green;
-      case 'canceled':
-      case 'cancelled':
-        return Colors.red;
-      case 'active':
-      case 'available':
-        return Colors.green;
-      case 'inactive':
-      case 'offline':
-        return Colors.grey;
-      default:
-        return cs.primary;
-    }
-  }
+  Color _color(BuildContext context) => AppTheme.statusColor(status);
 
   String _label() {
     switch (status.toLowerCase()) {
@@ -151,9 +292,9 @@ class StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         _label(),
@@ -191,8 +332,13 @@ class InfoTile extends StatelessWidget {
   final String label;
   final String value;
   final IconData? icon;
+  final Widget? trailing;
   const InfoTile(
-      {super.key, required this.label, required this.value, this.icon});
+      {super.key,
+      required this.label,
+      required this.value,
+      this.icon,
+      this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -207,12 +353,13 @@ class InfoTile extends StatelessWidget {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(label,
-                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                style: const TextStyle(fontSize: 12, color: AppColors.muted)),
             Text(value,
                 style:
                     const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
           ]),
         ),
+        if (trailing != null) trailing!,
       ]),
     );
   }
@@ -337,7 +484,7 @@ Future<String?> askCancelReason(BuildContext context,
               onPressed: ctrl.text.trim().length >= 3
                   ? () => Navigator.pop(ctx, ctrl.text.trim())
                   : null,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
               child: const Text('Cancel order'),
             ),
           ),

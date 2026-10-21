@@ -6,6 +6,7 @@ import '../../../core/services/order_alert_sound_service.dart';
 import '../data/order_model.dart';
 import '../data/orders_api.dart';
 import '../../../core/widgets/shared_widgets.dart';
+import '../../../core/theme.dart';
 
 enum IncomingOrderResult { accepted, declined, later }
 
@@ -109,10 +110,23 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Semantics(
+                  header: true,
+                  liveRegion: true,
+                  label: 'New order ${o.orderNumber}',
+                  child: Row(
                   children: [
-                    const Icon(Icons.notifications_active, color: Colors.orange),
-                    const SizedBox(width: 8),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: AppColors.warningSoft,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.notifications_active,
+                          color: AppColors.warning),
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text('New order ${o.orderNumber}',
                           style: theme.textTheme.titleLarge
@@ -120,18 +134,19 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
                     ),
                     Text(_waiting, style: theme.textTheme.bodySmall),
                   ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: o.isCod ? Colors.amber.shade50 : Colors.green.shade50,
+                    color: o.isCod ? AppColors.warningSoft : AppColors.successSoft,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
                       Icon(o.isCod ? Icons.payments_outlined : Icons.verified,
-                          color: o.isCod ? Colors.amber.shade800 : Colors.green),
+                          color: o.isCod ? AppColors.warning : AppColors.success),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -177,7 +192,7 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
                 ],
                 if (_error != null) ...[
                   const SizedBox(height: 10),
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                  Text(_error!, style: const TextStyle(color: AppColors.danger)),
                 ],
                 const SizedBox(height: 16),
                 Row(
@@ -186,8 +201,8 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
                       child: OutlinedButton(
                         onPressed: _busy ? null : _decline,
                         style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            minimumSize: const Size.fromHeight(52)),
+                            foregroundColor: AppColors.danger,
+                            minimumSize: const Size.fromHeight(56)),
                         child: const Text('Decline'),
                       ),
                     ),
@@ -197,7 +212,7 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
                       child: FilledButton(
                         onPressed: _busy ? null : _accept,
                         style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(52)),
+                            minimumSize: const Size.fromHeight(56)),
                         child: _busy
                             ? const SizedBox(
                                 width: 22,

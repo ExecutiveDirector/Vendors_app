@@ -35,6 +35,24 @@ class LocalStorage {
     }
   }
 
+  // Small JSON cache so list screens can still show the last known data
+  // when the network is down.
+  static Future<void> cacheJson(String key, Object value) async {
+    try {
+      await _box.put('cache_$key', jsonEncode(value));
+    } catch (_) {}
+  }
+
+  static Object? readCachedJson(String key) {
+    try {
+      final raw = _box.get('cache_$key');
+      if (raw == null) return null;
+      return jsonDecode(raw as String);
+    } catch (_) {
+      return null;
+    }
+  }
+
   // Full clear
   static Future<void> clearAll() async => _box.clear();
 }

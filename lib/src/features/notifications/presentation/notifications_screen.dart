@@ -15,6 +15,7 @@ import 'package:flutter/scheduler.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../core/services/notification_watcher_service.dart'
+import '../../../core/theme.dart';
     show notificationUnreadCount;
 
 // notificationUnreadCount now lives in NotificationWatcherService so it
@@ -151,7 +152,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+            .showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     }
   }
@@ -169,7 +170,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+            .showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     }
   }
@@ -194,7 +195,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: SafeArea(child: SkeletonList()));
     }
     if (_error != null) {
       return Scaffold(
@@ -202,9 +203,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+              Icon(Icons.error_outline, size: 64, color: AppColors.danger),
               const SizedBox(height: 16),
-              Text('Error: $_error', textAlign: TextAlign.center),
+              Text(friendlyError(_error), textAlign: TextAlign.center),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => _loadNotifications(showSpinner: true),
@@ -217,7 +218,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.subtle,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: Row(
@@ -233,7 +234,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.orange[700],
+                        color: AppColors.warning,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -281,7 +282,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         bottom: TabBar(
           controller: _tabController,
           labelColor: Theme.of(context).primaryColor,
-          unselectedLabelColor: Colors.grey[600],
+          unselectedLabelColor: AppColors.muted,
           tabs: [
             Tab(text: 'All (${_filtered.length})'),
             Tab(text: 'Unread (${_unread.length})'),
@@ -322,7 +323,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             label: const Text('Unread Only'),
             selected: _showUnreadOnly,
             onSelected: (v) => setState(() => _showUnreadOnly = v),
-            selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+            selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
             checkmarkColor: Theme.of(context).primaryColor,
           ),
         ]),
@@ -337,12 +338,12 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: AppColors.border),
           borderRadius: BorderRadius.circular(20),
           color: Colors.white,
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 14, color: Colors.grey[600]),
+          Icon(icon, size: 14, color: AppColors.muted),
           const SizedBox(width: 4),
           Text(label,
               style:
@@ -357,9 +358,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     if (items.isEmpty) {
       return Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.notifications_none, size: 64, color: Colors.grey[400]),
+          Icon(Icons.notifications_none, size: 64, color: AppColors.muted),
           const SizedBox(height: 16),
-          Text('No notifications', style: TextStyle(color: Colors.grey[600])),
+          Text('No notifications', style: TextStyle(color: AppColors.muted)),
         ]),
       );
     }
@@ -389,7 +390,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             borderRadius: BorderRadius.circular(8),
             border: unread
                 ? Border.all(
-                    color: Theme.of(context).primaryColor.withOpacity(0.3))
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.3))
                 : null,
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -420,7 +421,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                       const SizedBox(height: 4),
                       Text(n.message,
                           style:
-                              TextStyle(color: Colors.grey[600], fontSize: 14),
+                              TextStyle(color: AppColors.muted, fontSize: 14),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis),
                     ]),
@@ -430,7 +431,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                   if (v == 'mark_read') _markAsRead(n.notificationId);
                   if (v == 'delete') _confirmDelete(n);
                 },
-                child: Icon(Icons.more_vert, color: Colors.grey[400]),
+                child: Icon(Icons.more_vert, color: AppColors.muted),
                 itemBuilder: (_) => [
                   if (!n.isRead)
                     const PopupMenuItem(
@@ -443,10 +444,10 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                   const PopupMenuItem(
                       value: 'delete',
                       child: Row(children: [
-                        Icon(Icons.delete, size: 18, color: Colors.red),
+                        Icon(Icons.delete, size: 18, color: AppColors.danger),
                         SizedBox(width: 8),
                         Text('Delete',
-                            style: TextStyle(color: Colors.red))
+                            style: TextStyle(color: AppColors.danger))
                       ])),
                 ],
               ),
@@ -458,7 +459,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               _chip(n.priority.toUpperCase(), _priorityColor(n.priority)),
               const Spacer(),
               Text(_timeAgo(n.createdAt),
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                  style: TextStyle(color: AppColors.muted, fontSize: 12)),
             ]),
           ]),
         ),
@@ -469,7 +470,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   Widget _chip(String text, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8)),
         child: Text(text,
             style: TextStyle(
@@ -478,38 +479,38 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
   Widget _typeIcon(String type) {
     final (icon, color) = switch (type) {
-      'order_update'    => (Icons.shopping_cart, Colors.blue),
-      'delivery_update' => (Icons.local_shipping, Colors.green),
-      'payment_update'  => (Icons.payment, Colors.purple),
-      'promotional'     => (Icons.local_offer, Colors.orange),
-      'system_alert'    => (Icons.warning, Colors.red),
-      'reminder'        => (Icons.access_time, Colors.amber),
-      _                 => (Icons.notifications, Colors.grey),
+      'order_update'    => (Icons.shopping_cart, AppColors.info),
+      'delivery_update' => (Icons.local_shipping, AppColors.success),
+      'payment_update'  => (Icons.payment, AppColors.violet),
+      'promotional'     => (Icons.local_offer, AppColors.warning),
+      'system_alert'    => (Icons.warning, AppColors.danger),
+      'reminder'        => (Icons.access_time, AppColors.warning),
+      _                 => (Icons.notifications, AppColors.muted),
     };
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20)),
       child: Icon(icon, color: color, size: 20),
     );
   }
 
   Color _typeColor(String type) => switch (type) {
-        'order_update'    => Colors.blue,
-        'delivery_update' => Colors.green,
-        'payment_update'  => Colors.purple,
-        'promotional'     => Colors.orange,
-        'system_alert'    => Colors.red,
-        'reminder'        => Colors.amber,
-        _                 => Colors.grey,
+        'order_update'    => AppColors.info,
+        'delivery_update' => AppColors.success,
+        'payment_update'  => AppColors.violet,
+        'promotional'     => AppColors.warning,
+        'system_alert'    => AppColors.danger,
+        'reminder'        => AppColors.warning,
+        _                 => AppColors.muted,
       };
 
   Color _priorityColor(String p) => switch (p) {
-        'high'   => Colors.red,
-        'normal' => Colors.blue,
-        _        => Colors.grey,
+        'high'   => AppColors.danger,
+        'normal' => AppColors.info,
+        _        => AppColors.muted,
       };
 
   String _getTypeName(String type) => switch (type) {
@@ -543,7 +544,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Cancel')),
             primary: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
               onPressed: () {
                 Navigator.pop(context);
                 _deleteNotification(n.notificationId);

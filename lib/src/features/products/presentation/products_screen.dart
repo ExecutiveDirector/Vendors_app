@@ -13,6 +13,7 @@ import '../data/product_model.dart';
 import '../data/products_api.dart';
 import 'product_form_screen.dart';
 import '../../../core/widgets/shared_widgets.dart';
+import '../../../core/theme.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -66,19 +67,19 @@ class _ProductsScreenState extends State<ProductsScreen>
         title: 'Delete Product',
         content: 'Delete "${p.productName}"? This cannot be undone.',
         confirmLabel: 'Delete',
-        confirmColor: Colors.red);
+        confirmColor: AppColors.danger);
     if (ok != true) return;
     try {
       await ProductsApi.delete(p.productId.toString());
       _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Product deleted'), backgroundColor: Colors.red));
+            content: Text('Product deleted'), backgroundColor: AppColors.danger));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+            .showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     }
   }
@@ -124,7 +125,10 @@ class _ProductsScreenState extends State<ProductsScreen>
           ],
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
+          IconButton(
+              tooltip: 'Refresh',
+              icon: const Icon(Icons.refresh),
+              onPressed: _load),
         ],
       ),
       body: Column(children: [
@@ -141,7 +145,7 @@ class _ProductsScreenState extends State<ProductsScreen>
         ),
         Expanded(
           child: _loading
-              ? const AppLoading()
+              ? const SkeletonList()
               : _error != null
                   ? AppError(message: _error!, onRetry: _load)
                   : TabBarView(
@@ -199,18 +203,18 @@ class _InventoryTab extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
               backgroundColor: isOut
-                  ? Colors.red.shade50
+                  ? AppColors.dangerSoft
                   : isLow
-                      ? Colors.orange.shade50
-                      : Colors.teal.shade50,
+                      ? AppColors.warningSoft
+                      : AppColors.primarySoft,
               child: Text(stock.toString(),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: isOut
-                        ? Colors.red
+                        ? AppColors.danger
                         : isLow
-                            ? Colors.orange
-                            : Colors.teal,
+                            ? AppColors.warning
+                            : AppColors.primary,
                   )),
             ),
             title: Text(p.productName,
@@ -230,19 +234,19 @@ class _InventoryTab extends StatelessWidget {
                   ),
                   if (p.outletName != null) ...[
                     const Text(' • ',
-                        style: TextStyle(color: Colors.grey)),
+                        style: TextStyle(color: AppColors.muted)),
                     Text(p.outletName!,
                         style: const TextStyle(
-                            fontSize: 12, color: Colors.grey)),
+                            fontSize: 12, color: AppColors.muted)),
                   ],
                 ]),
                 if (isOut)
                   const Text('Out of Stock',
-                      style: TextStyle(color: Colors.red, fontSize: 12))
+                      style: TextStyle(color: AppColors.danger, fontSize: 12))
                 else if (isLow)
                   Text('Low Stock ($stock left)',
                       style: const TextStyle(
-                          color: Colors.orange, fontSize: 12)),
+                          color: AppColors.warning, fontSize: 12)),
               ],
             ),
             trailing: PopupMenuButton<String>(
@@ -255,7 +259,7 @@ class _InventoryTab extends StatelessWidget {
                 const PopupMenuItem(
                     value: 'delete',
                     child: Text('Delete',
-                        style: TextStyle(color: Colors.red))),
+                        style: TextStyle(color: AppColors.danger))),
               ],
             ),
           ),
@@ -322,7 +326,7 @@ class _CatalogTab extends StatelessWidget {
                             progress == null
                                 ? child
                                 : Container(
-                                    color: Colors.grey[100],
+                                    color: AppColors.subtle,
                                     child: Center(
                                       child: SizedBox(
                                         width: 18,
@@ -358,7 +362,7 @@ class _CatalogTab extends StatelessWidget {
                 if (p.categoryName != null)
                   Text(p.categoryName!,
                       style: const TextStyle(
-                          fontSize: 12, color: Colors.grey)),
+                          fontSize: 12, color: AppColors.muted)),
               ],
             ),
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -367,12 +371,12 @@ class _CatalogTab extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text('Inactive',
                       style:
-                          TextStyle(fontSize: 11, color: Colors.grey)),
+                          TextStyle(fontSize: 11, color: AppColors.muted)),
                 ),
               PopupMenuButton<String>(
                 onSelected: (v) {
@@ -384,7 +388,7 @@ class _CatalogTab extends StatelessWidget {
                   const PopupMenuItem(
                       value: 'delete',
                       child: Text('Delete',
-                          style: TextStyle(color: Colors.red))),
+                          style: TextStyle(color: AppColors.danger))),
                 ],
               ),
             ]),
@@ -399,7 +403,7 @@ class _CatalogTab extends StatelessWidget {
         child: Center(
           child: Icon(Icons.inventory_2_outlined,
               size: 26,
-              color: isActive ? Colors.grey[400] : Colors.grey[300]),
+              color: isActive ? AppColors.muted : AppColors.border),
         ),
       );
 }

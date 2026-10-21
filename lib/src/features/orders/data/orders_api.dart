@@ -1,19 +1,44 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+
 import '../../../core/api/dio_client.dart';
+import '../../../core/services/local_storage.dart';
 import 'order_model.dart';
 
 class OrdersApi {
+  /// True when the last [list] call could not reach the server and the
+  /// result came from the offline cache instead.
+  static bool lastListFromCache = false;
+
   static Future<List<Order>> list({String? status}) async {
     final params = <String, dynamic>{};
     if (status != null) params['status'] = status;
-    final res = await ApiClient.dio.get(
-      '/vendors/orders',
-      queryParameters: params,
-    );
-    final data = res.data;
-    if (data is List) return data.map((e) => Order.fromJson(e)).toList();
-    return [];
+    final cacheKey = 'orders_${status ?? 'all'}';
+    try {
+      final res = await ApiClient.dio.get(
+        '/vendors/orders',
+        queryParameters: params,
+      );
+      lastListFromCache = false;
+      final data = res.data;
+      if (data is List) {
+        LocalStorage.cacheJson(cacheKey, data);
+        return data.map((e) => Order.fromJson(e)).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      final offline = e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout;
+      final cached = offline ? LocalStorage.readCachedJson(cacheKey) : null;
+      if (cached is List) {
+        lastListFromCache = true;
+        return cached.map((e) => Order.fromJson(e)).toList();
+      }
+      rethrow;
+    }
   }
 
   static Future<Order> byId(String id) async {

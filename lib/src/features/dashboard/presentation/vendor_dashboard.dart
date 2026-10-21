@@ -299,7 +299,7 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
             _greeting(),
             style: TextStyle(
               fontSize: 12,
-              color: cs.onSurface.withOpacity(0.6),
+              color: cs.onSurface.withValues(alpha: 0.6),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -422,11 +422,11 @@ class _HeroCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [cs.primary, cs.primary.withOpacity(0.75)],
+          colors: [cs.primary, cs.primary.withValues(alpha: 0.75)],
         ),
         boxShadow: [
           BoxShadow(
-            color: cs.primary.withOpacity(0.35),
+            color: cs.primary.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -441,7 +441,7 @@ class _HeroCard extends StatelessWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
             ),
@@ -453,7 +453,7 @@ class _HeroCard extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.06),
+                color: Colors.white.withValues(alpha: 0.06),
                 shape: BoxShape.circle,
               ),
             ),
@@ -465,7 +465,7 @@ class _HeroCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
@@ -491,7 +491,7 @@ class _HeroCard extends StatelessWidget {
               Text(
                 'Track orders, revenue & inventory\nin real time.',
                 style: TextStyle(
-                    color: Colors.white.withOpacity(0.8), fontSize: 13),
+                    color: Colors.white.withValues(alpha: 0.8), fontSize: 13),
               ),
               const SizedBox(height: 20),
               FilledButton.icon(
@@ -539,8 +539,8 @@ class _KpiCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? color.withOpacity(0.12) : color.withOpacity(0.06);
-    final border = color.withOpacity(0.18);
+    final bg = isDark ? color.withValues(alpha: 0.12) : color.withValues(alpha: 0.06);
+    final border = color.withValues(alpha: 0.18);
 
     Color trendColor;
     IconData trendIcon;
@@ -551,7 +551,7 @@ class _KpiCard extends StatelessWidget {
       trendColor = const Color(0xFFEF4444);
       trendIcon = Icons.trending_down_rounded;
     } else {
-      trendColor = color.withOpacity(0.7);
+      trendColor = color.withValues(alpha: 0.7);
       trendIcon = Icons.info_outline_rounded;
     }
 
@@ -571,7 +571,7 @@ class _KpiCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 20),
@@ -595,14 +595,14 @@ class _KpiCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: color.withOpacity(0.8),
+              color: color.withValues(alpha: 0.8),
             ),
           ),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
             decoration: BoxDecoration(
-              color: trendColor.withOpacity(0.1),
+              color: trendColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -647,9 +647,9 @@ class _QuickAction extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.08),
+              color: color.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+              border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -657,7 +657,7 @@ class _QuickAction extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
+                    color: color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: color, size: 20),
@@ -668,7 +668,7 @@ class _QuickAction extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: color.withOpacity(0.9),
+                    color: color.withValues(alpha: 0.9),
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -712,7 +712,7 @@ class _OrderCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: cs.primary.withOpacity(0.1),
+                  color: cs.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.receipt_long_rounded,
@@ -731,7 +731,7 @@ class _OrderCard extends StatelessWidget {
                       Text(
                         _formatDate(date),
                         style: TextStyle(
-                            fontSize: 12, color: cs.onSurface.withOpacity(0.5)),
+                            fontSize: 12, color: cs.onSurface.withValues(alpha: 0.5)),
                       ),
                     ],
                   ],
@@ -875,7 +875,7 @@ class _DashboardSkeletonState extends State<_DashboardSkeleton>
       height: height,
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: base.withOpacity(_anim.value * 0.12),
+        color: base.withValues(alpha: _anim.value * 0.12),
         borderRadius: BorderRadius.circular(radius),
       ),
     );
