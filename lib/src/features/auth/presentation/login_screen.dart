@@ -247,11 +247,11 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -306,11 +306,11 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -356,7 +356,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
+              const Text(
                 'Remember me',
                 style: TextStyle(color: AppColors.muted, fontSize: 14),
               ),
@@ -478,8 +478,8 @@ class _LoginScreenState extends State<LoginScreen>
     final warmupTimer = Future.delayed(const Duration(seconds: 5), () {
       if (_loading && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
+          const SnackBar(
+            content: Row(
               children: [
                 SizedBox(
                   height: 16,
@@ -500,8 +500,8 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             backgroundColor: AppColors.warning,
             behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 55), // stays until dismissed
+            margin: EdgeInsets.all(16),
+            duration: Duration(seconds: 55), // stays until dismissed
           ),
         );
       }

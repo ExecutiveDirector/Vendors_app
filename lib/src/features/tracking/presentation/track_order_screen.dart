@@ -203,10 +203,10 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
                   BoxShadow(color: Colors.black12, blurRadius: 8),
                 ],
               ),
-              child: Row(
+              child: const Row(
                 children: [
-                  const Icon(Icons.info_outline, size: 18, color: AppColors.muted),
-                  const SizedBox(width: 8),
+                  Icon(Icons.info_outline, size: 18, color: AppColors.muted),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'No delivery location on file for this order yet.',

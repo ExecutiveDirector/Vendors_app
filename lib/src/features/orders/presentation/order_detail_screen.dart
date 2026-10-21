@@ -30,17 +30,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     });
     try {
       final o = await OrdersApi.byId(widget.id);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _order = o;
           _loading = false;
         });
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = e.toString();
           _loading = false;
         });
+      }
     }
   }
 
@@ -48,14 +50,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     try {
       await OrdersApi.updateStatus(widget.id, status, reason: reason);
       _load();
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Status updated to $status'),
             backgroundColor: AppColors.primary));
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(friendlyError(e)), backgroundColor: AppColors.danger));
+      }
     }
   }
 

@@ -235,7 +235,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEdit ? 'Edit Product' : 'Add Product'),
@@ -284,8 +283,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                         required: true,
                         keyboardType: TextInputType.number, validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
-                      if (double.tryParse(v) == null)
+                      if (double.tryParse(v) == null) {
                         return 'Enter a valid number';
+                      }
                       return null;
                     }),
                     const SizedBox(height: 12),
@@ -433,7 +433,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         _imageUrls.isEmpty
             ? 'No photos added yet — the first one is shown to customers.'
             : 'First photo is shown to customers. Tap Add for more, or the × to remove one.',
-        style: TextStyle(color: AppColors.muted, fontSize: 12),
+        style: const TextStyle(color: AppColors.muted, fontSize: 12),
       ),
     ]);
   }

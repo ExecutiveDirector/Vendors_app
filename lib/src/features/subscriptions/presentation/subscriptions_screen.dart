@@ -240,11 +240,11 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                   ? AppColors.warning
                   : AppColors.border,
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: AppColors.border,
             blurRadius: 4,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -300,7 +300,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
           // Frequency
           Text(
             'Every ${plan.frequencyInterval} ${plan.frequency.toLowerCase()}',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               color: AppColors.muted,
             ),

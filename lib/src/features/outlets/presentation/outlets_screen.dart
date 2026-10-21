@@ -169,7 +169,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: AppColors.danger),
+              const Icon(Icons.error_outline, size: 64, color: AppColors.danger),
               const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -228,14 +228,14 @@ class _OutletsScreenState extends State<OutletsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.store_outlined, size: 64, color: AppColors.muted),
+            const Icon(Icons.store_outlined, size: 64, color: AppColors.muted),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'No outlets found',
               style: TextStyle(fontSize: 18, color: AppColors.muted),
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'Add your first outlet to get started',
               style: TextStyle(color: AppColors.muted),
             ),
@@ -288,7 +288,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
                   ),
-                  child: Icon(Icons.store, color: AppColors.info, size: 28),
+                  child: const Icon(Icons.store, color: AppColors.info, size: 28),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -328,7 +328,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Code: ${outlet.outletCode}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppColors.muted,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -337,13 +337,13 @@ class _OutletsScreenState extends State<OutletsScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Icon(Icons.location_on,
+                          const Icon(Icons.location_on,
                               size: 16, color: AppColors.muted),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               _formatAddress(outlet),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppColors.muted,
                                 fontSize: 13,
                               ),
@@ -398,7 +398,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
             const SizedBox(height: 16),
             if (outlet.contactPhone != null) ...[
               Row(children: [
-                Icon(Icons.phone, size: 16, color: AppColors.muted),
+                const Icon(Icons.phone, size: 16, color: AppColors.muted),
                 const SizedBox(width: 8),
                 Text(outlet.contactPhone!,
                     style: const TextStyle(fontWeight: FontWeight.w500)),
@@ -407,7 +407,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
             ],
             if (outlet.managerName != null) ...[
               Row(children: [
-                Icon(Icons.person, size: 16, color: AppColors.muted),
+                const Icon(Icons.person, size: 16, color: AppColors.muted),
                 const SizedBox(width: 8),
                 Text('Manager: ${outlet.managerName}',
                     style: const TextStyle(fontWeight: FontWeight.w500)),
@@ -416,7 +416,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
             ],
             if (operatingHours != null) ...[
               Row(children: [
-                Icon(Icons.access_time, size: 16, color: AppColors.muted),
+                const Icon(Icons.access_time, size: 16, color: AppColors.muted),
                 const SizedBox(width: 8),
                 Text(
                   _getCurrentDayHours(operatingHours),
@@ -475,7 +475,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
       ),
       child: Text(
         facility,
-        style: TextStyle(
+        style: const TextStyle(
           color: AppColors.info,
           fontSize: 11,
           fontWeight: FontWeight.w500,
@@ -1012,7 +1012,7 @@ class _OutletFormDialogState extends State<OutletFormDialog> {
                   ),
                 ]),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Tip: Defaults to Nairobi CBD coordinates',
                   style: TextStyle(
                     fontSize: 11,

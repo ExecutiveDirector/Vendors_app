@@ -263,7 +263,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               style: const TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 4),
-            Text(
+            const Text(
               'This is the live price customers pay at this outlet — separate '
               'from the product\'s catalog reference price.',
               style: TextStyle(color: AppColors.muted, fontSize: 11),
@@ -593,22 +593,22 @@ class _InventoryCard extends StatelessWidget {
             Row(
               children: [
                 if (item.outletName != null) ...[
-                  Icon(Icons.store_outlined,
+                  const Icon(Icons.store_outlined,
                       size: 14, color: AppColors.muted),
                   const SizedBox(width: 4),
                   Text(
                     item.outletName!,
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: const TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                   const SizedBox(width: 16),
                 ],
                 if (item.categoryName != null) ...[
-                  Icon(Icons.category_outlined,
+                  const Icon(Icons.category_outlined,
                       size: 14, color: AppColors.muted),
                   const SizedBox(width: 4),
                   Text(
                     item.categoryName!,
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    style: const TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                 ],
               ],

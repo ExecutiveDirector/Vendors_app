@@ -297,7 +297,7 @@ class AppTheme {
             if (states.contains(WidgetState.selected)) {
               return const IconThemeData(color: _primaryGreen, size: 22);
             }
-            return IconThemeData(color: _textSecDark, size: 22);
+            return const IconThemeData(color: _textSecDark, size: 22);
           }),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -382,29 +382,29 @@ class AppTheme {
           ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          labelStyle: TextStyle(color: _textSecDark),
-          hintStyle: TextStyle(color: _textSecDark),
+          labelStyle: const TextStyle(color: _textSecDark),
+          hintStyle: const TextStyle(color: _textSecDark),
         ),
         dividerTheme: const DividerThemeData(
           color: Color(0xFF334155),
           thickness: 1,
           space: 1,
         ),
-        textTheme: TextTheme(
-          displayLarge: const TextStyle(
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(
               color: _textPrimDark, fontWeight: FontWeight.w800),
-          headlineLarge: const TextStyle(
+          headlineLarge: TextStyle(
               color: _textPrimDark, fontWeight: FontWeight.w700),
-          headlineMedium: const TextStyle(
+          headlineMedium: TextStyle(
               color: _textPrimDark, fontWeight: FontWeight.w700),
-          titleLarge: const TextStyle(
+          titleLarge: TextStyle(
               color: _textPrimDark, fontWeight: FontWeight.w700),
-          titleMedium: const TextStyle(
+          titleMedium: TextStyle(
               color: _textPrimDark, fontWeight: FontWeight.w600),
-          titleSmall: const TextStyle(
+          titleSmall: TextStyle(
               color: _textPrimDark, fontWeight: FontWeight.w600),
-          bodyLarge: const TextStyle(color: _textPrimDark),
-          bodyMedium: const TextStyle(color: _textPrimDark),
+          bodyLarge: TextStyle(color: _textPrimDark),
+          bodyMedium: TextStyle(color: _textPrimDark),
           bodySmall: TextStyle(color: _textSecDark),
           labelLarge:
               TextStyle(color: _textSecDark, fontWeight: FontWeight.w600),

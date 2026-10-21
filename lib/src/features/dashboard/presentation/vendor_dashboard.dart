@@ -17,8 +17,6 @@ import '../../../core/services/push_notification_service.dart';
 import '../../../core/services/notification_watcher_service.dart';
 import '../../../core/services/incoming_order_service.dart';
 import '../../../core/widgets/shared_widgets.dart';
-import '../../notifications/presentation/notifications_screen.dart'
-    show notificationUnreadCount;
 
 // ── Numeric helpers ──────────────────────────────────────────────────────────
 double _safeDouble(dynamic v) {

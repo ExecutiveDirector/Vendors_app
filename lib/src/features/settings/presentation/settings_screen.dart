@@ -80,11 +80,13 @@ class _SettingsScreenState extends State<SettingsScreen>
       final user = response['data']?['user'] as Map<String, dynamic>?;
       if (user != null) {
         await LocalStorage.setVendorProfile(user);
-        if (mounted) setState(() {
+        if (mounted) {
+          setState(() {
           _profile = user;
           _loading = false;
           _error = null;
         });
+        }
       }
     } catch (e) {
       if (mounted && _profile == null) {

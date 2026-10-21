@@ -143,21 +143,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                     ),
                               ),
                               const SizedBox(height: 12),
-                              _InsightTile(
+                              const _InsightTile(
                                 icon: Icons.trending_up,
                                 title: 'Sales Performance',
                                 subtitle:
                                     'Your store analytics are based on delivered orders.',
                               ),
                               const Divider(),
-                              _InsightTile(
+                              const _InsightTile(
                                 icon: Icons.bar_chart,
                                 title: 'Revenue Tracking',
                                 subtitle:
                                     'Revenue is automatically calculated from successful orders.',
                               ),
                               const Divider(),
-                              _InsightTile(
+                              const _InsightTile(
                                 icon: Icons.inventory_2_outlined,
                                 title: 'Product Analytics',
                                 subtitle:
