@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../data/wholesaler_sync_models.dart';
 import '../data/wholesaler_sync_service.dart';
+import '../../../core/theme.dart';
 
 class WholesalerSyncScreen extends StatefulWidget {
   const WholesalerSyncScreen({super.key});
@@ -118,7 +119,7 @@ class _ReviewQueueTabState extends State<_ReviewQueueTab> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _busyId = null);
@@ -134,7 +135,7 @@ class _ReviewQueueTabState extends State<_ReviewQueueTab> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     } finally {
       if (mounted) setState(() => _busyId = null);
@@ -162,7 +163,7 @@ class _ReviewQueueTabState extends State<_ReviewQueueTab> {
         child: ListView(
           children: const [
             SizedBox(height: 120),
-            Icon(Icons.check_circle_outline, size: 48, color: Colors.grey),
+            Icon(Icons.check_circle_outline, size: 48, color: AppColors.muted),
             SizedBox(height: 12),
             Center(
               child: Padding(
@@ -171,7 +172,7 @@ class _ReviewQueueTabState extends State<_ReviewQueueTab> {
                   'Nothing pending review — wholesaler updates either '
                   'published automatically or haven\'t come in yet.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppColors.muted),
                 ),
               ),
             ),
@@ -216,7 +217,7 @@ class _StagingItemCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade300),
+        side: BorderSide(color: AppColors.border),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -235,7 +236,7 @@ class _StagingItemCard extends StatelessWidget {
                   label: item.isNewProduct
                       ? 'New product'
                       : 'Update: ${item.matchedProductName ?? ''}',
-                  color: item.isNewProduct ? Colors.orange : Colors.blue,
+                  color: item.isNewProduct ? AppColors.warning : AppColors.info,
                 ),
               ],
             ),
@@ -243,18 +244,18 @@ class _StagingItemCard extends StatelessWidget {
             Text(
               '${item.extractedSize ?? '—'} · Wholesale cost KES ${item.wholesaleCost.toStringAsFixed(0)}'
               '${item.computedRetailPrice != null ? ' → Retail KES ${item.computedRetailPrice!.toStringAsFixed(0)}' : ''}',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              style: TextStyle(color: AppColors.muted, fontSize: 13),
             ),
             if (item.reviewReason != null) ...[
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, size: 14, color: Colors.amber.shade800),
+                  Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.warning),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       item.friendlyReviewReason,
-                      style: TextStyle(color: Colors.amber.shade800, fontSize: 12),
+                      style: TextStyle(color: AppColors.warning, fontSize: 12),
                     ),
                   ),
                 ],
@@ -264,17 +265,17 @@ class _StagingItemCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 'Suggested category: ${item.suggestedCategoryName}',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                style: TextStyle(color: AppColors.muted, fontSize: 12),
               ),
             ],
             const SizedBox(height: 10),
             ButtonPair(
               secondary: OutlinedButton.icon(
                 onPressed: busy ? null : onReject,
-                icon: const Icon(Icons.close, size: 18, color: Colors.red),
-                label: const Text('Reject', style: TextStyle(color: Colors.red)),
+                icon: const Icon(Icons.close, size: 18, color: AppColors.danger),
+                label: const Text('Reject', style: TextStyle(color: AppColors.danger)),
                 style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.red)),
+                    side: const BorderSide(color: AppColors.danger)),
               ),
               primary: ElevatedButton.icon(
                 onPressed: busy ? null : onApprove,
@@ -286,7 +287,7 @@ class _StagingItemCard extends StatelessWidget {
                       )
                     : const Icon(Icons.check, size: 18),
                 label: const Text('Approve'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
               ),
             ),
           ],
@@ -306,7 +307,7 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
@@ -347,7 +348,7 @@ class _SourcesTabState extends State<_SourcesTab> {
     } catch (e) {
       if (mounted) {
         setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     }
   }
@@ -359,7 +360,7 @@ class _SourcesTabState extends State<_SourcesTab> {
       _load();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendlyError(e))));
       }
     }
   }
@@ -398,7 +399,7 @@ class _SourcesTabState extends State<_SourcesTab> {
               const Text(
                 'Ask AquaGas support for the group JID if you don\'t have it yet — '
                 'it shows up automatically the first time the group sends a message.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(fontSize: 12, color: AppColors.muted),
               ),
             ],
           ),
@@ -426,7 +427,7 @@ class _SourcesTabState extends State<_SourcesTab> {
         _load();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendlyError(e))));
         }
       }
     }
@@ -450,7 +451,7 @@ class _SourcesTabState extends State<_SourcesTab> {
                       'No WhatsApp groups registered yet. Tap "Register group" to '
                       'connect a wholesaler price-list group.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: AppColors.muted),
                     ),
                   ),
                 )
@@ -466,7 +467,7 @@ class _SourcesTabState extends State<_SourcesTab> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.grey.shade300),
+                          side: BorderSide(color: AppColors.border),
                         ),
                         child: ListTile(
                           title: Text(s.sourceLabel ?? s.whatsappGroupJid),
@@ -479,7 +480,7 @@ class _SourcesTabState extends State<_SourcesTab> {
                             children: [
                               _Badge(
                                 label: s.status,
-                                color: s.status == 'active' ? Colors.green : Colors.grey,
+                                color: s.status == 'active' ? AppColors.success : AppColors.muted,
                               ),
                               IconButton(
                                 icon: Icon(

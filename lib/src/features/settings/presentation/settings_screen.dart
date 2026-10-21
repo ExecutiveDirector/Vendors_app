@@ -9,6 +9,7 @@ import '../../../core/services/notification_watcher_service.dart';
 import '../../../core/services/incoming_order_service.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../auth/data/auth_api.dart';
+import '../../../core/theme.dart';
 
 /// Real vendor settings, backed by GET/PUT /auth/profile
 /// (authController.getProfile / updateProfile) — replaces the previous
@@ -121,7 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             ),
             primary: ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
               child:
                   const Text('Sign Out', style: TextStyle(color: Colors.white)),
             ),
@@ -187,11 +188,11 @@ class _SettingsScreenState extends State<SettingsScreen>
                                   child: CircularProgressIndicator(
                                       strokeWidth: 2),
                                 )
-                              : const Icon(Icons.logout, color: Colors.red),
+                              : const Icon(Icons.logout, color: AppColors.danger),
                           label: const Text('Sign Out',
-                              style: TextStyle(color: Colors.red)),
+                              style: TextStyle(color: AppColors.danger)),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.red),
+                            side: const BorderSide(color: AppColors.danger),
                           ),
                         ),
                       ),
@@ -218,7 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [cs.primary.withOpacity(0.10), cs.primary.withOpacity(0.04)],
+          colors: [cs.primary.withValues(alpha: 0.10), cs.primary.withValues(alpha: 0.04)],
         ),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -257,15 +258,17 @@ class _SettingsScreenState extends State<SettingsScreen>
                 if (email.isNotEmpty)
                   Text(email,
                       style: TextStyle(
-                          fontSize: 12.5, color: cs.onSurface.withOpacity(0.6))),
+                          fontSize: 12.5, color: cs.onSurface.withValues(alpha: 0.6))),
                 if (phone.isNotEmpty)
                   Text(phone,
                       style: TextStyle(
-                          fontSize: 12.5, color: cs.onSurface.withOpacity(0.6))),
+                          fontSize: 12.5, color: cs.onSurface.withValues(alpha: 0.6))),
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: _openEditProfileSheet,
-                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                  style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      padding: const EdgeInsets.symmetric(horizontal: 4)),
                   child: const Text('Edit Profile'),
                 ),
               ],
@@ -294,10 +297,10 @@ class _SettingsScreenState extends State<SettingsScreen>
   Widget _buildNotificationsTile(ColorScheme cs) {
     final (label, color) = switch (_notifStatus) {
       AuthorizationStatus.authorized || AuthorizationStatus.provisional =>
-        ('Enabled', Colors.green[700]!),
-      AuthorizationStatus.denied => ('Disabled', Colors.red[700]!),
-      AuthorizationStatus.notDetermined => ('Not set up yet', Colors.grey[600]!),
-      _ => ('Checking…', Colors.grey[600]!),
+        ('Enabled', AppColors.success),
+      AuthorizationStatus.denied => ('Disabled', AppColors.danger),
+      AuthorizationStatus.notDetermined => ('Not set up yet', AppColors.muted),
+      _ => ('Checking…', AppColors.muted),
     };
     return ListTile(
       leading: Icon(Icons.notifications_outlined, color: cs.primary),
@@ -436,7 +439,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -473,7 +476,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 10),
-                Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
               ],
               const SizedBox(height: 16),
               SizedBox(
@@ -579,7 +582,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -607,7 +610,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 10),
-                Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+                Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
               ],
               const SizedBox(height: 16),
               SizedBox(

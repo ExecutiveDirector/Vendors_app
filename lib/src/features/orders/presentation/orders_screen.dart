@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../data/order_model.dart';
 import '../data/orders_api.dart';
 import '../../../core/widgets/shared_widgets.dart';
+import '../../../core/theme.dart';
 
 // FIX: safe numeric helpers — API may return money as String ("1700.00")
 double _safeDouble(dynamic v) {
@@ -112,7 +114,10 @@ class _OrdersScreenState extends State<OrdersScreen>
         leading: const AppBackButton(),
         title: const Text('Orders'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _load)
+          IconButton(
+              tooltip: 'Refresh',
+              icon: const Icon(Icons.refresh),
+              onPressed: _load)
         ],
         bottom: TabBar(
           controller: _tabs,
@@ -132,7 +137,7 @@ class _OrdersScreenState extends State<OrdersScreen>
                             color: Theme.of(context)
                                 .colorScheme
                                 .primary
-                                .withOpacity(0.15),
+                                .withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(_count(_statuses[i]).toString(),
@@ -150,16 +155,18 @@ class _OrdersScreenState extends State<OrdersScreen>
           padding: const EdgeInsets.all(12),
           child: TextField(
             onChanged: (v) => setState(() => _search = v),
+            textInputAction: TextInputAction.search,
             decoration: const InputDecoration(
-              hintText: 'Search orders...',
+              hintText: 'Search by order number or phone',
               prefixIcon: Icon(Icons.search),
               isDense: true,
             ),
           ),
         ),
+        if (OrdersApi.lastListFromCache && !_loading) const OfflineBanner(),
         Expanded(
           child: _loading
-              ? const AppLoading()
+              ? const SkeletonList()
               : _error != null
                   ? AppError(message: _error!, onRetry: _load)
                   : TabBarView(
@@ -219,17 +226,18 @@ class _OrderCard extends StatelessWidget {
   Future<void> _advance(BuildContext context, String next) async {
     try {
       await OrdersApi.updateStatus(order.orderId, next);
+      HapticFeedback.mediumImpact();
       onRefresh();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Order ${order.orderNumber} → $next'),
-          backgroundColor: Colors.teal,
+          backgroundColor: AppColors.primary,
         ));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+            SnackBar(content: Text(friendlyError(e)), backgroundColor: AppColors.danger));
       }
     }
   }
@@ -263,10 +271,10 @@ class _OrderCard extends StatelessWidget {
             ]),
             const SizedBox(height: 8),
             Row(children: [
-              Icon(Icons.access_time, size: 14, color: Colors.grey.shade500),
+              Icon(Icons.access_time, size: 14, color: AppColors.muted),
               const SizedBox(width: 4),
               Text(_formatDate(order.createdAt),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  style: TextStyle(fontSize: 12, color: AppColors.muted)),
               const Spacer(),
               // FIX: totalAmount is already a double from Order.fromJson — safe to use directly
               Text('KES ${order.totalAmount.toStringAsFixed(0)}',
@@ -280,12 +288,12 @@ class _OrderCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 6),
                 child: Row(children: [
                   Icon(Icons.location_on_outlined,
-                      size: 14, color: Colors.grey.shade500),
+                      size: 14, color: AppColors.muted),
                   const SizedBox(width: 4),
                   Expanded(
                       child: Text(
                     order.deliveryAddress ?? order.deliveryContact ?? '',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   )),
@@ -310,6 +318,29 @@ class _OrderCard extends StatelessWidget {
                     ),
                 ]),
               ),
+            if (order.deliveryContact != null &&
+                looksLikePhone(order.deliveryContact!) &&
+                order.orderStatus != 'delivered' &&
+                order.orderStatus != 'canceled')
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: InkWell(
+                  onTap: () => callNumber(context, order.deliveryContact!),
+                  borderRadius: BorderRadius.circular(8),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 40),
+                    child: Row(children: [
+                      Icon(Icons.call_outlined, size: 16, color: cs.primary),
+                      const SizedBox(width: 6),
+                      Text('Call ${order.deliveryContact!}',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: cs.primary,
+                              fontWeight: FontWeight.w600)),
+                    ]),
+                  ),
+                ),
+              ),
             if (order.items.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
@@ -317,7 +348,7 @@ class _OrderCard extends StatelessWidget {
                   order.items
                       .map((i) => '${i.quantity}× ${i.productName}')
                       .join(', '),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  style: TextStyle(fontSize: 12, color: AppColors.muted),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -326,7 +357,7 @@ class _OrderCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text('Waiting for the customer to pay',
-                    style: TextStyle(fontSize: 12, color: Colors.orange.shade800)),
+                    style: TextStyle(fontSize: 12, color: AppColors.warning)),
               ),
             if (next != null && nextLabel != null) ...[
               const SizedBox(height: 10),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' as picker;
 import 'package:dio/dio.dart';
+import '../../../core/theme.dart';
 
 /// Result of image validation
 class ImageValidationResult {
@@ -291,8 +292,8 @@ class ImagePickerService {
     if (imageUrl == null || imageUrl.isEmpty) {
       child = errorWidget ??
           Container(
-            color: Colors.grey[300],
-            child: const Icon(Icons.image_not_supported, color: Colors.grey),
+            color: AppColors.border,
+            child: const Icon(Icons.image_not_supported, color: AppColors.muted),
           );
     } else {
       child = Image.network(
@@ -304,7 +305,7 @@ class ImagePickerService {
             ? child
             : (placeholder ?? const Center(child: CircularProgressIndicator())),
         errorBuilder: (context, error, stack) =>
-            errorWidget ?? const Icon(Icons.broken_image, color: Colors.grey),
+            errorWidget ?? const Icon(Icons.broken_image, color: AppColors.muted),
       );
     }
 
@@ -327,7 +328,7 @@ class ImagePickerService {
       height: height,
       fit: fit,
       errorBuilder: (context, error, stack) =>
-          const Icon(Icons.broken_image, color: Colors.grey),
+          const Icon(Icons.broken_image, color: AppColors.muted),
     );
     return borderRadius != null
         ? ClipRRect(borderRadius: borderRadius, child: child)
@@ -376,7 +377,7 @@ class _ImageSourceBottomSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -395,11 +396,11 @@ class _ImageSourceBottomSheet extends StatelessWidget {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.blue[50],
+                    color: AppColors.infoSoft,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.photo_library,
-                      color: Colors.blue, size: 28),
+                      color: AppColors.info, size: 28),
                 ),
                 title: const Text('Gallery',
                     style: TextStyle(fontWeight: FontWeight.w600)),
@@ -422,11 +423,11 @@ class _ImageSourceBottomSheet extends StatelessWidget {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.green[50],
+                    color: AppColors.successSoft,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.camera_alt,
-                      color: Colors.green, size: 28),
+                      color: AppColors.success, size: 28),
                 ),
                 title: const Text('Camera',
                     style: TextStyle(fontWeight: FontWeight.w600)),
@@ -465,7 +466,7 @@ class _ImageSourceDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.photo_library, color: Colors.blue),
+            leading: const Icon(Icons.photo_library, color: AppColors.info),
             title: const Text('Gallery'),
             onTap: () async {
               Navigator.pop(context);
@@ -476,7 +477,7 @@ class _ImageSourceDialog extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.camera_alt, color: Colors.green),
+            leading: const Icon(Icons.camera_alt, color: AppColors.success),
             title: const Text('Camera'),
             onTap: () async {
               Navigator.pop(context);

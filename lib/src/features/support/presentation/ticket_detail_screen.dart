@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/widgets/shared_widgets.dart';
 import '../data/support_api.dart';
+import '../../../core/theme.dart';
 
 class TicketDetailScreen extends StatefulWidget {
   final SupportTicket ticket;
@@ -103,7 +104,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            color: cs.primary.withOpacity(0.05),
+            color: cs.primary.withValues(alpha: 0.05),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -113,7 +114,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 const SizedBox(height: 6),
                 Text(widget.ticket.description,
                     style: TextStyle(
-                        fontSize: 13.5, color: cs.onSurface.withOpacity(0.75))),
+                        fontSize: 13.5, color: cs.onSurface.withValues(alpha: 0.75))),
               ],
             ),
           ),
@@ -150,7 +151,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                                   decoration: BoxDecoration(
                                     color: isMine
                                         ? cs.primary
-                                        : Colors.grey[200],
+                                        : AppColors.border,
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Column(
@@ -167,7 +168,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                                               fontSize: 11,
                                               fontWeight: FontWeight.w700,
                                               color: cs.onSurface
-                                                  .withOpacity(0.6),
+                                                  .withValues(alpha: 0.6),
                                             ),
                                           ),
                                         ),
@@ -186,8 +187,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                                         style: TextStyle(
                                           fontSize: 10.5,
                                           color: isMine
-                                              ? Colors.white.withOpacity(0.7)
-                                              : cs.onSurface.withOpacity(0.45),
+                                              ? Colors.white.withValues(alpha: 0.7)
+                                              : cs.onSurface.withValues(alpha: 0.45),
                                         ),
                                       ),
                                     ],
@@ -201,11 +202,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(14),
-              color: Colors.grey[100],
+              color: AppColors.subtle,
               child: Text(
                 'This ticket is ${widget.ticket.status}. Open a new ticket if you need further help.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12.5, color: cs.onSurface.withOpacity(0.6)),
+                style: TextStyle(fontSize: 12.5, color: cs.onSurface.withValues(alpha: 0.6)),
               ),
             )
           else

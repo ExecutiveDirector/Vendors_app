@@ -20,6 +20,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../orders/data/order_model.dart';
 import '../../orders/data/orders_api.dart';
+import '../../../core/theme.dart';
 
 class TrackOrderScreen extends StatefulWidget {
   final String orderId;
@@ -106,7 +107,7 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
       case 'cancelled':
         return const Color(0xFFEF4444);
       default:
-        return Colors.grey;
+        return AppColors.muted;
     }
   }
 
@@ -204,12 +205,12 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, size: 18, color: Colors.grey),
+                  const Icon(Icons.info_outline, size: 18, color: AppColors.muted),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'No delivery location on file for this order yet.',
-                      style: TextStyle(fontSize: 12.5, color: Colors.grey[700]),
+                      style: TextStyle(fontSize: 12.5, color: AppColors.muted),
                     ),
                   ),
                 ],
@@ -284,7 +285,7 @@ class _InfoPanel extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -294,7 +295,7 @@ class _InfoPanel extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: cs.primary.withOpacity(0.12),
+                  color: cs.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.local_fire_department_outlined,
@@ -313,7 +314,7 @@ class _InfoPanel extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          color: cs.onSurface.withOpacity(0.6), fontSize: 13),
+                          color: cs.onSurface.withValues(alpha: 0.6), fontSize: 13),
                     ),
                   ],
                 ),
@@ -339,7 +340,7 @@ class _InfoPanel extends StatelessWidget {
               if (order.deliveryContact != null)
                 Text(order.deliveryContact!,
                     style: TextStyle(
-                        fontSize: 12.5, color: cs.onSurface.withOpacity(0.6))),
+                        fontSize: 12.5, color: cs.onSurface.withValues(alpha: 0.6))),
             ],
           ),
 
@@ -348,7 +349,7 @@ class _InfoPanel extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: cs.primary.withOpacity(0.08),
+                color: cs.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -365,7 +366,7 @@ class _InfoPanel extends StatelessWidget {
                         Text('Rider',
                             style: TextStyle(
                                 fontSize: 11,
-                                color: cs.onSurface.withOpacity(0.5),
+                                color: cs.onSurface.withValues(alpha: 0.5),
                                 fontWeight: FontWeight.w500)),
                         Text(order.riderName!,
                             style: const TextStyle(
@@ -391,7 +392,7 @@ class _InfoPanel extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               'No rider assigned yet.',
-              style: TextStyle(fontSize: 12.5, color: cs.onSurface.withOpacity(0.5)),
+              style: TextStyle(fontSize: 12.5, color: cs.onSurface.withValues(alpha: 0.5)),
             ),
           ],
         ],

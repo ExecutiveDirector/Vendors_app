@@ -5,6 +5,7 @@ import '../../../core/services/local_storage.dart';
 import '../../../core/services/push_notification_service.dart';
 import '../../../core/services/notification_watcher_service.dart';
 import '../../../core/services/incoming_order_service.dart';
+import '../../../core/theme.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool sessionExpired;
@@ -57,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen>
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Your session expired. Please log in again.'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.warning,
         ));
       });
     }
@@ -148,10 +149,10 @@ class _LoginScreenState extends State<LoginScreen>
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               width: 2,
             ),
           ),
@@ -170,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen>
         const SizedBox(height: 8),
         Text(
           'Manage your business with ease',
-          style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.8)),
+          style: TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: 0.8)),
         ),
       ],
     );
@@ -184,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -199,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen>
               'Welcome Back!',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
+                color: AppColors.muted,
               ),
               textAlign: TextAlign.center,
             ),
@@ -207,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen>
             Text(
               'Sign in to continue to your dashboard',
               style:
-                  theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  theme.textTheme.bodyMedium?.copyWith(color: AppColors.muted),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -238,7 +239,7 @@ class _LoginScreenState extends State<LoginScreen>
           margin: const EdgeInsets.all(12),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF10B981).withOpacity(0.1),
+            color: const Color(0xFF10B981).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(Icons.email_outlined,
@@ -246,11 +247,11 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -258,10 +259,10 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
+          borderSide: const BorderSide(color: AppColors.danger, width: 2),
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: AppColors.subtle,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
@@ -290,7 +291,7 @@ class _LoginScreenState extends State<LoginScreen>
           margin: const EdgeInsets.all(12),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF10B981).withOpacity(0.1),
+            color: const Color(0xFF10B981).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(Icons.lock_outline,
@@ -300,16 +301,16 @@ class _LoginScreenState extends State<LoginScreen>
           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
           icon: Icon(
             _obscurePassword ? Icons.visibility_off : Icons.visibility,
-            color: Colors.grey[600],
+            color: AppColors.muted,
           ),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -317,10 +318,10 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
+          borderSide: const BorderSide(color: AppColors.danger, width: 2),
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: AppColors.subtle,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
@@ -345,20 +346,19 @@ class _LoginScreenState extends State<LoginScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                height: 24,
-                width: 24,
+                height: 40,
+                width: 40,
                 child: Checkbox(
                   value: _rememberMe,
                   onChanged: (value) =>
                       setState(() => _rememberMe = value ?? false),
                   activeColor: const Color(0xFF10B981),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 'Remember me',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                style: TextStyle(color: AppColors.muted, fontSize: 14),
               ),
             ],
           ),
@@ -368,8 +368,9 @@ class _LoginScreenState extends State<LoginScreen>
             onPressed: _showForgotPasswordDialog,
             style: TextButton.styleFrom(
               foregroundColor: const Color(0xFF10B981),
-              padding: EdgeInsets.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: const Size(48, 48),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              tapTargetSize: MaterialTapTargetSize.padded,
             ),
             child: const Text(
               'Forgot Password?',
@@ -391,7 +392,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981).withOpacity(0.3),
+            color: const Color(0xFF10B981).withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -440,18 +441,18 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         Text(
           'New to our platform?',
-          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14),
         ),
         const SizedBox(height: 8),
         TextButton(
           onPressed: _showContactSupportDialog,
           style: TextButton.styleFrom(
             foregroundColor: Colors.white,
-            backgroundColor: Colors.white.withOpacity(0.1),
+            backgroundColor: Colors.white.withValues(alpha: 0.1),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: Colors.white.withOpacity(0.3)),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
             ),
           ),
           child: const Text(
@@ -497,7 +498,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ],
             ),
-            backgroundColor: Colors.orange[700],
+            backgroundColor: AppColors.warning,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
             duration: const Duration(seconds: 55), // stays until dismissed
@@ -570,7 +571,7 @@ class _LoginScreenState extends State<LoginScreen>
                 Text('Welcome back, $userName!'),
               ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
           ),
@@ -614,7 +615,7 @@ class _LoginScreenState extends State<LoginScreen>
               Expanded(child: Text(errorMessage)),
             ],
           ),
-          backgroundColor: Colors.red[700],
+          backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
           duration: const Duration(seconds: 5),
@@ -689,7 +690,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Please enter your email address.'),
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppColors.danger,
                   ),
                 );
                 return;
@@ -699,7 +700,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Please enter a valid email address.'),
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppColors.danger,
                   ),
                 );
                 return;
@@ -713,7 +714,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Password reset link sent to your email!'),
-                      backgroundColor: Colors.green,
+                      backgroundColor: AppColors.success,
                     ),
                   );
                 }
@@ -722,7 +723,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(e.toString().replaceAll('Exception: ', '')),
-                      backgroundColor: Colors.red,
+                      backgroundColor: AppColors.danger,
                     ),
                   );
                 }

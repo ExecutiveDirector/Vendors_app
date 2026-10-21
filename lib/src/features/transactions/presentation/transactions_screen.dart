@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/widgets/shared_widgets.dart';
 import '../data/transactions_api.dart';
+import '../../../core/theme.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -100,9 +101,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       case 'refund':
       case 'fee':
       case 'commission':
-        return Colors.orange;
+        return AppColors.warning;
       case 'payout':
-        return Colors.blue;
+        return AppColors.info;
       default:
         return cs.onSurface;
     }
@@ -203,7 +204,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                             vertical: 6),
                                     leading: CircleAvatar(
                                       backgroundColor:
-                                          color.withOpacity(0.12),
+                                          color.withValues(alpha: 0.12),
                                       child: Icon(
                                           _typeIcon(t.transactionType),
                                           color: color,
@@ -231,7 +232,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                             fontWeight: FontWeight.w700,
                                             fontSize: 14,
                                             color: isOutgoing
-                                                ? Colors.red
+                                                ? AppColors.danger
                                                 : color,
                                           ),
                                         ),

@@ -1,0 +1,50 @@
+name: CI
+
+# Compiles and checks every pull request before it can reach main (and from
+# there, vendors' phones via the Firebase distribution workflow).
+on:
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Errors fail the build. Info-level lints are reported but tolerated so
+      # the existing codebase can be cleaned up gradually.
+      - name: Analyze
+        run: |
+          set +e
+          flutter analyze --no-fatal-infos --no-fatal-warnings > analyze.txt 2>&1
+          code=$?
+          cat analyze.txt
+          # Surface each error as an annotation so it shows on the PR.
+          grep -E '^\s*error •' analyze.txt | head -40 | while IFS= read -r line; do
+            msg=$(echo "$line" | awk -F' • ' '{print $2}')
+            loc=$(echo "$line" | awk -F' • ' '{print $3}')
+            file=${loc%%:*}; rest=${loc#*:}; ln=${rest%%:*}
+            echo "::error file=$file,line=$ln::$msg"
+          done
+          exit $code
+
+      - name: Test
+        run: |
+          set +e
+          flutter test --reporter expanded > test.txt 2>&1
+          code=$?
+          tail -80 test.txt
+          grep -E '\[E\]|Expected:|Actual:|error:' test.txt | head -20 | while IFS= read -r line; do
+            echo "::error::$line"
+          done
+          exit $code

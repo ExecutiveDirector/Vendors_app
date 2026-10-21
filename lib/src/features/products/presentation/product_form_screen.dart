@@ -5,6 +5,8 @@ import '../data/product_model.dart';
 import '../data/products_api.dart';
 import 'image_picker.dart';
 import '../../../core/api/dio_client.dart';
+import '../../../core/theme.dart';
+import '../../../core/widgets/shared_widgets.dart';
 
 // Verified against the real backend: routes/vendors.js mounts this at
 // POST /vendors/upload-image (NOT /vendors/products/upload-image), handled
@@ -137,7 +139,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content:
                 Text('${file.name}: ${validation.errorMessage ?? 'Invalid image'}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.danger,
           ));
         }
         continue;
@@ -162,7 +164,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('${file.name} failed to upload — skipped.'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
         ));
       }
     }
@@ -213,7 +215,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_isEdit ? 'Product updated!' : 'Product created!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
         Navigator.of(context).pop(true);
@@ -222,8 +224,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Error: ${e.toString()}'),
-              backgroundColor: Colors.red),
+              content: Text(friendlyError(e)),
+              backgroundColor: AppColors.danger),
         );
       }
     } finally {
@@ -372,9 +374,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     height: 96,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      color: Colors.grey[200],
+                      color: AppColors.border,
                       child: const Icon(Icons.broken_image,
-                          color: Colors.grey, size: 28),
+                          color: AppColors.muted, size: 28),
                     ),
                   ),
                   onRemove: _uploadingImage
@@ -389,7 +391,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   width: 96,
                   height: 96,
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: AppColors.subtle,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Center(
@@ -406,18 +408,18 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: AppColors.subtle,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: const Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.add_a_photo_outlined,
-                          color: Colors.grey, size: 24),
+                          color: AppColors.muted, size: 24),
                       SizedBox(height: 4),
-                      Text('Add', style: TextStyle(color: Colors.grey)),
+                      Text('Add', style: TextStyle(color: AppColors.muted)),
                     ],
                   ),
                 ),
@@ -431,7 +433,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         _imageUrls.isEmpty
             ? 'No photos added yet — the first one is shown to customers.'
             : 'First photo is shown to customers. Tap Add for more, or the × to remove one.',
-        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        style: TextStyle(color: AppColors.muted, fontSize: 12),
       ),
     ]);
   }
@@ -450,7 +452,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               child: Container(
                 padding: const EdgeInsets.all(2),
                 decoration: const BoxDecoration(
-                  color: Colors.red,
+                  color: AppColors.danger,
                   shape: BoxShape.circle,
                 ),
                 child:
@@ -466,7 +468,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(title,
           style: const TextStyle(
-              fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+              fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.muted)),
       const SizedBox(height: 12),
       Card(
         child: Padding(

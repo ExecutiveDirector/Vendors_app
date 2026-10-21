@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../data/inventory_api.dart';
 import '../data/inventory_item.dart';
 import '../../../core/widgets/shared_widgets.dart';
+import '../../../core/theme.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -101,7 +102,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -113,7 +114,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               ),
               Text(
                 'Current: ${item.currentStock} units',
-                style: const TextStyle(color: Colors.grey),
+                style: const TextStyle(color: AppColors.muted),
               ),
               const SizedBox(height: 20),
               Row(
@@ -123,14 +124,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     label: const Text('Add Stock'),
                     selected: adding,
                     onSelected: (_) => setSt(() => adding = true),
-                    selectedColor: Colors.teal.shade100,
+                    selectedColor: AppColors.primarySoft,
                   ),
                   const SizedBox(width: 12),
                   ChoiceChip(
                     label: const Text('Remove Stock'),
                     selected: !adding,
                     onSelected: (_) => setSt(() => adding = false),
-                    selectedColor: Colors.red.shade100,
+                    selectedColor: AppColors.dangerSoft,
                   ),
                 ],
               ),
@@ -202,14 +203,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Stock adjusted: ${delta > 0 ? '+' : ''}$delta'),
-            backgroundColor: delta > 0 ? Colors.teal : Colors.orange,
+            backgroundColor: delta > 0 ? AppColors.primary : AppColors.warning,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(friendlyError(e)), backgroundColor: AppColors.danger),
         );
       }
     }
@@ -241,7 +242,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -254,18 +255,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
             if (item.outletName != null)
               Text(
                 'at ${item.outletName}',
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                style: const TextStyle(color: AppColors.muted, fontSize: 12),
               ),
             const SizedBox(height: 4),
             Text(
               'Current price: KES ${item.sellingPrice.toStringAsFixed(0)}',
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: AppColors.muted),
             ),
             const SizedBox(height: 4),
             Text(
               'This is the live price customers pay at this outlet — separate '
               'from the product\'s catalog reference price.',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+              style: TextStyle(color: AppColors.muted, fontSize: 11),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -315,14 +316,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Price updated to KES ${newPrice.toStringAsFixed(0)}'),
-            backgroundColor: Colors.teal,
+            backgroundColor: AppColors.primary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(friendlyError(e)), backgroundColor: AppColors.danger),
         );
       }
     }
@@ -351,7 +352,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
         leading: const AppBackButton(),
         title: const Text('Inventory'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
+          IconButton(
+              tooltip: 'Refresh',
+              icon: const Icon(Icons.refresh),
+              onPressed: _load),
           IconButton(
             icon: const Icon(Icons.download_outlined),
             tooltip: 'Export CSV',
@@ -380,13 +384,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 _SumCard(
                   label: 'Low Stock',
                   value: _lowCount.toString(),
-                  color: Colors.orange,
+                  color: AppColors.warning,
                 ),
                 const SizedBox(width: 8),
                 _SumCard(
                   label: 'Out of Stock',
                   value: _outCount.toString(),
-                  color: Colors.red,
+                  color: AppColors.danger,
                 ),
               ],
             ),
@@ -426,7 +430,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           // List
           Expanded(
             child: _loading
-                ? const AppLoading()
+                ? const SkeletonList()
                 : _error != null
                     ? AppError(message: _error!, onRetry: _load)
                     : _filtered.isEmpty
@@ -529,10 +533,10 @@ class _InventoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final stockColor = item.isOutOfStock
-        ? Colors.red
+        ? AppColors.danger
         : item.isLowStock
-            ? Colors.orange
-            : Colors.teal;
+            ? AppColors.warning
+            : AppColors.primary;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -557,7 +561,7 @@ class _InventoryCard extends StatelessWidget {
                         Text(
                           item.sku!,
                           style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
+                              const TextStyle(fontSize: 12, color: AppColors.muted),
                         ),
                     ],
                   ),
@@ -590,21 +594,21 @@ class _InventoryCard extends StatelessWidget {
               children: [
                 if (item.outletName != null) ...[
                   Icon(Icons.store_outlined,
-                      size: 14, color: Colors.grey.shade500),
+                      size: 14, color: AppColors.muted),
                   const SizedBox(width: 4),
                   Text(
                     item.outletName!,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                   const SizedBox(width: 16),
                 ],
                 if (item.categoryName != null) ...[
                   Icon(Icons.category_outlined,
-                      size: 14, color: Colors.grey.shade500),
+                      size: 14, color: AppColors.muted),
                   const SizedBox(width: 4),
                   Text(
                     item.categoryName!,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: AppColors.muted),
                   ),
                 ],
               ],
@@ -640,8 +644,8 @@ class _InventoryCard extends StatelessWidget {
                   label: const Text('History'),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    minimumSize: const Size(48, 44),
+                    tapTargetSize: MaterialTapTargetSize.padded,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -652,8 +656,8 @@ class _InventoryCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    minimumSize: const Size(48, 44),
+                    tapTargetSize: MaterialTapTargetSize.padded,
                   ),
                 ),
               ],
@@ -666,20 +670,20 @@ class _InventoryCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
+                  color: AppColors.warningSoft,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.warning_amber,
-                        size: 14, color: Colors.orange),
+                        size: 14, color: AppColors.warning),
                     const SizedBox(width: 6),
                     Text(
                       item.isOutOfStock
                           ? 'Out of stock — restock needed'
                           : 'Low stock — reorder point: ${item.reorderPoint ?? item.minimumStockLevel}',
                       style:
-                          const TextStyle(fontSize: 12, color: Colors.orange),
+                          const TextStyle(fontSize: 12, color: AppColors.warning),
                     ),
                   ],
                 ),
@@ -750,7 +754,7 @@ class _MovementsSheetState extends State<_MovementsSheet> {
                     ),
                     Text(
                       widget.item.productName,
-                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      style: const TextStyle(color: AppColors.muted, fontSize: 13),
                     ),
                   ],
                 ),
@@ -783,11 +787,11 @@ class _MovementsSheetState extends State<_MovementsSheet> {
                         return ListTile(
                           leading: CircleAvatar(
                             backgroundColor: isIn
-                                ? Colors.green.shade50
-                                : Colors.red.shade50,
+                                ? AppColors.successSoft
+                                : AppColors.dangerSoft,
                             child: Icon(
                               isIn ? Icons.add : Icons.remove,
-                              color: isIn ? Colors.green : Colors.red,
+                              color: isIn ? AppColors.success : AppColors.danger,
                             ),
                           ),
                           title: Text(
@@ -796,7 +800,7 @@ class _MovementsSheetState extends State<_MovementsSheet> {
                           trailing: Text(
                             m['created_at']?.toString().substring(0, 10) ?? '—',
                             style: const TextStyle(
-                                fontSize: 11, color: Colors.grey),
+                                fontSize: 11, color: AppColors.muted),
                           ),
                         );
                       },

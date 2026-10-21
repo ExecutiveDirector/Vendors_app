@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 // ─── Brand palette ─────────────────────────────────────────────────────────
 // AquaGas green — matches the consumer app and the live-tracking screen
@@ -17,6 +18,48 @@ const _textPrimLight = Color(0xFF0F1729);
 const _textSecLight = Color(0xFF64748B);
 const _textPrimDark = Color(0xFFF1F5F9);
 const _textSecDark = Color(0xFF94A3B8);
+
+/// Semantic colour tokens shared by every screen.
+///
+/// All values are `const`, so they can be used inside `const` widgets. The
+/// "soft" tints and [border] are translucent on purpose: they read correctly
+/// on both the light and the dark surfaces without needing a BuildContext.
+class AppColors {
+  AppColors._();
+
+  static const primary = Color(0xFF10B981);
+  static const primaryDark = Color(0xFF064E3B);
+
+  // Status / feedback
+  static const success = Color(0xFF16A34A);
+  static const warning = Color(0xFFD97706);
+  static const danger = Color(0xFFDC2626);
+  static const info = Color(0xFF2563EB);
+  static const violet = Color(0xFF7C3AED);
+
+  // Translucent backgrounds for badges, banners and chips
+  static const successSoft = Color(0x1F16A34A);
+  static const warningSoft = Color(0x1FD97706);
+  static const dangerSoft = Color(0x1FDC2626);
+  static const infoSoft = Color(0x1F2563EB);
+  static const primarySoft = Color(0x1F10B981);
+  static const subtle = Color(0x14808A9C);
+
+  // Neutrals
+  static const muted = Color(0xFF64748B); // secondary text and icons
+  static const border = Color(0x33808A9C); // hairlines and outlines
+}
+
+/// Spacing scale so screens stop inventing their own gaps.
+class AppSpacing {
+  AppSpacing._();
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
+  static const double screen = 16; // standard screen edge padding
+}
 
 /// FIX: was instance methods — now all static so main.dart can access without
 /// constructing an AppTheme instance.
@@ -47,6 +90,7 @@ class AppTheme {
           foregroundColor: _textPrimLight,
           elevation: 0,
           scrolledUnderElevation: 1,
+          systemOverlayStyle: SystemUiOverlayStyle.dark,
           centerTitle: false,
           titleTextStyle: TextStyle(
             color: _textPrimLight,
@@ -57,7 +101,7 @@ class AppTheme {
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: _cardLight,
-          indicatorColor: _primaryGreen.withOpacity(0.15),
+          indicatorColor: _primaryGreen.withValues(alpha: 0.15),
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           iconTheme: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
@@ -169,7 +213,7 @@ class AppTheme {
         ),
         chipTheme: ChipThemeData(
           backgroundColor: _surfaceLight,
-          selectedColor: _primaryGreen.withOpacity(0.15),
+          selectedColor: _primaryGreen.withValues(alpha: 0.15),
           labelStyle:
               const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -237,6 +281,7 @@ class AppTheme {
           foregroundColor: _textPrimDark,
           elevation: 0,
           scrolledUnderElevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle.light,
           centerTitle: false,
           titleTextStyle: TextStyle(
             color: _textPrimDark,
@@ -247,7 +292,7 @@ class AppTheme {
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: _cardDark,
-          indicatorColor: _primaryGreen.withOpacity(0.2),
+          indicatorColor: _primaryGreen.withValues(alpha: 0.2),
           iconTheme: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
               return const IconThemeData(color: _primaryGreen, size: 22);
@@ -372,22 +417,30 @@ class AppTheme {
   static Color statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
-        return _accentAmber;
+        return AppColors.warning;
       case 'confirmed':
-        return const Color(0xFF60A5FA);
+        return AppColors.info;
       case 'preparing':
-        return const Color(0xFFA78BFA);
+      case 'processing':
+        return AppColors.violet;
       case 'ready':
-        return _accentGreen;
+        return const Color(0xFF0D9488);
       case 'dispatched':
-        return _primaryGreen;
+      case 'in_transit':
+        return const Color(0xFF4F46E5);
       case 'delivered':
-        return _accentGreen;
+      case 'active':
+      case 'available':
+        return AppColors.success;
       case 'cancelled':
       case 'canceled':
-        return const Color(0xFFEF4444);
+      case 'refunded':
+        return AppColors.danger;
+      case 'inactive':
+      case 'offline':
+        return AppColors.muted;
       default:
-        return _textSecLight;
+        return _primaryGreen;
     }
   }
 

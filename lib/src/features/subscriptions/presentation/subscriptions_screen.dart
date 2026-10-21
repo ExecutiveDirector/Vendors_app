@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../data/subscriptions_api.dart';
 import './subscription_plan.dart';
 import '../../../core/widgets/shared_widgets.dart';
+import '../../../core/theme.dart';
 
 class SubscriptionsScreen extends StatefulWidget {
   const SubscriptionsScreen({super.key});
@@ -72,7 +73,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
       await _fetchPlans();
       if (mounted) _showSnackbar('Subscribed to ${plan.planName}');
     } catch (e) {
-      if (mounted) _showSnackbar('Subscription failed: $e');
+      if (mounted) _showSnackbar('Subscription failed: ${friendlyError(e)}');
     } finally {
       if (mounted) setState(() => _inFlightPlanId = null);
     }
@@ -97,7 +98,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
       setState(() => _activePlanId = plan.planId);
       if (mounted) _showSnackbar('Plan changed successfully.');
     } catch (e) {
-      if (mounted) _showSnackbar('Upgrade failed: $e');
+      if (mounted) _showSnackbar('Upgrade failed: ${friendlyError(e)}');
     } finally {
       if (mounted) setState(() => _inFlightPlanId = null);
     }
@@ -124,7 +125,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
       });
       if (mounted) _showSnackbar('Subscription cancelled.');
     } catch (e) {
-      if (mounted) _showSnackbar('Cancel failed: $e');
+      if (mounted) _showSnackbar('Cancel failed: ${friendlyError(e)}');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -188,9 +189,9 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                          size: 48, color: AppColors.danger),
                       const SizedBox(height: 16),
-                      Text('Error: $_error', textAlign: TextAlign.center),
+                      Text(friendlyError(_error), textAlign: TextAlign.center),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchPlans,
@@ -226,22 +227,22 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         color: isActive
-            ? Colors.green.shade50
+            ? AppColors.successSoft
             : recommended
-                ? Colors.orange.shade50
+                ? AppColors.warningSoft
                 : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           width: isActive ? 2 : 1,
           color: isActive
-              ? Colors.green
+              ? AppColors.success
               : recommended
-                  ? Colors.orange
-                  : Colors.grey.shade300,
+                  ? AppColors.warning
+                  : AppColors.border,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: AppColors.border,
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -268,7 +269,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.orange,
+                    color: AppColors.warning,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Text(
@@ -292,7 +293,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.green,
+              color: AppColors.success,
             ),
           ),
 
@@ -301,7 +302,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
             'Every ${plan.frequencyInterval} ${plan.frequency.toLowerCase()}',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: AppColors.muted,
             ),
           ),
 
@@ -341,8 +342,8 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                       }
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: isActive ? Colors.green : null,
-                disabledBackgroundColor: isActive ? Colors.green : null,
+                backgroundColor: isActive ? AppColors.success : null,
+                disabledBackgroundColor: isActive ? AppColors.success : null,
               ),
               child: inFlight
                   ? const SizedBox(
@@ -372,7 +373,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.green),
+          Icon(icon, size: 16, color: AppColors.success),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
