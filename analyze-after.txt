@@ -1,8 +1,0 @@
-Analyzing Vendors_app...                                        
-
-warning • This 'onError' handler must return a value assignable to 'Response<dynamic>', but ends without returning a value • lib/src/core/services/push_notification_service.dart:367:27 • body_might_complete_normally_catch_error
-   info • Unnecessary instance of 'Container' • lib/src/features/dashboard/presentation/vendor_dashboard.dart:639:12 • avoid_unnecessary_containers
-warning • The declaration '_safeDouble' isn't referenced • lib/src/features/orders/presentation/orders_screen.dart:11:8 • unused_element
-warning • The value of the local variable 'cs' isn't used • lib/src/features/products/presentation/product_form_screen.dart:238:11 • unused_local_variable
-
-4 issues found. (ran in 2.9s)

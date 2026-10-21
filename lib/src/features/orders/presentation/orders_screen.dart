@@ -7,13 +7,6 @@ import '../data/orders_api.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../core/theme.dart';
 
-// FIX: safe numeric helpers — API may return money as String ("1700.00")
-double _safeDouble(dynamic v) {
-  if (v == null) return 0.0;
-  if (v is double) return v;
-  if (v is int) return v.toDouble();
-  return double.tryParse(v.toString()) ?? 0.0;
-}
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});

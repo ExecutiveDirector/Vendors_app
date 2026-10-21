@@ -364,7 +364,7 @@ class PushNotificationService {
         ApiClient.dio.post('/vendors/push-token/register', data: {
           'token': newToken,
           'platform': Platform.isIOS ? 'ios' : 'android',
-        }).catchError((_) {
+        }).then<void>((_) {}, onError: (Object _) {
           // Best-effort — if this fails, the old token simply goes stale.
         });
       });

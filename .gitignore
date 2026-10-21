@@ -1,0 +1,16 @@
+# Flutter / Dart generated files
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+pubspec.lock
+
+# Platform-generated
+android/local.properties
+android/**/GeneratedPluginRegistrant.java
+ios/Flutter/ephemeral/
+ios/**/GeneratedPluginRegistrant.*
+.idea/
+*.iml
+.DS_Store
