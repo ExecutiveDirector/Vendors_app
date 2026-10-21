@@ -15,8 +15,8 @@ import 'package:flutter/scheduler.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/widgets/shared_widgets.dart';
 import '../../../core/services/notification_watcher_service.dart'
-import '../../../core/theme.dart';
     show notificationUnreadCount;
+import '../../../core/theme.dart';
 
 // notificationUnreadCount now lives in NotificationWatcherService so it
 // stays accurate app-wide (including firing native phone notifications for
