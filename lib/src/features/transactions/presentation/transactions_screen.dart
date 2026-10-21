@@ -119,7 +119,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         title: const Text('Transactions'),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
             onPressed: _load,
             tooltip: 'Refresh',

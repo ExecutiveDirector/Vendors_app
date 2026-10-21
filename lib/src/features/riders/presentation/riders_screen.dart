@@ -79,7 +79,6 @@ class _RidersScreenState extends State<RidersScreen> {
         title: const Text('Riders'),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
             onPressed: _load,
             tooltip: 'Refresh',

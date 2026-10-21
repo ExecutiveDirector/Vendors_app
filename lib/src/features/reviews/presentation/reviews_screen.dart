@@ -85,7 +85,6 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         title: const Text('Reviews'),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
             onPressed: _load,
             tooltip: 'Refresh',
