@@ -34,22 +34,33 @@ class ApiClient {
         },
       ),
 
-      // ── 401 handling ──────────────────────────────────────────────────────
-      // NOTE: this is intentionally NOT a silent-refresh-and-retry flow.
-      // There is no /auth/refresh endpoint anywhere in this codebase, and
-      // only a single access token is stored (no refresh token) — so there
-      // is nothing to refresh against. Inventing an endpoint here would risk
-      // a confident-looking 404 loop in production. Instead: on 401, clear
-      // the stale session and send the vendor back to login with a clear
-      // reason, rather than the previous behavior (silent failure / a
-      // confusing raw error toast / possible crash deeper in a screen).
-      //
-      // If/when a real refresh endpoint exists, replace the body of
-      // onError below with the refresh-and-retry logic.
+      // ── 401 handling: silent refresh, then retry ─────────────────────────
+      // Vendors stay signed in. On 401 we exchange the stored refresh token
+      // for a new access token (single-flight, so parallel requests share one
+      // refresh) and retry. We only sign out when the server definitively
+      // rejects the refresh token (401/403) — never on network errors.
       InterceptorsWrapper(
         onError: (DioException err, handler) async {
-          if (err.response?.statusCode == 401 &&
-              err.requestOptions.path != '/auth/login') {
+          final path = err.requestOptions.path;
+          if (err.response?.statusCode != 401 ||
+              path == '/auth/login' ||
+              path == '/auth/refresh' ||
+              err.requestOptions.extra['retried'] == true) {
+            return handler.next(err);
+          }
+          final result = await _refreshOnce();
+          if (result == _RefreshResult.ok) {
+            try {
+              final opts = err.requestOptions;
+              opts.extra['retried'] = true;
+              opts.headers['Authorization'] =
+                  'Bearer ${await LocalStorage.getToken()}';
+              return handler.resolve(await _dio.fetch(opts));
+            } on DioException catch (e) {
+              return handler.next(e);
+            }
+          }
+          if (result == _RefreshResult.rejected) {
             await LocalStorage.clearAll();
             navigateTo('/login?reason=session_expired');
           }
@@ -72,4 +83,40 @@ class ApiClient {
     ]);
 
   static Dio get dio => _dio;
+
+  static Future<_RefreshResult>? _inflight;
+
+  static Future<_RefreshResult> _refreshOnce() =>
+      _inflight ??= _doRefresh().whenComplete(() => _inflight = null);
+
+  static Future<_RefreshResult> _doRefresh() async {
+    final refresh = await LocalStorage.getRefreshToken();
+    // Sessions created before this update have no refresh token: sign in once more.
+    if (refresh == null || refresh.isEmpty) return _RefreshResult.rejected;
+    try {
+      final res = await Dio(BaseOptions(
+        baseUrl: AppConfig.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 30),
+      )).post('/auth/refresh', data: {'refreshToken': refresh});
+      final data = res.data;
+      final token = data is Map ? data['token'] : null;
+      if (token is! String) return _RefreshResult.failed;
+      await LocalStorage.setToken(token);
+      final next = data['refreshToken'];
+      if (next is String && next.isNotEmpty) {
+        await LocalStorage.setRefreshToken(next);
+      }
+      return _RefreshResult.ok;
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      return (code == 401 || code == 403)
+          ? _RefreshResult.rejected
+          : _RefreshResult.failed; // offline / server error: stay signed in
+    } catch (_) {
+      return _RefreshResult.failed;
+    }
+  }
 }
+
+enum _RefreshResult { ok, rejected, failed }

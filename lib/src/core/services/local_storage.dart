@@ -11,6 +11,10 @@ class LocalStorage {
   // Token helpers
   static Future<void> setToken(String v) async => _box.put('token', v);
   static Future<String?> getToken() async => _box.get('token');
+  static Future<void> setRefreshToken(String v) async =>
+      _box.put('refresh_token', v);
+  static Future<String?> getRefreshToken() async =>
+      _box.get('refresh_token') as String?;
 
   // Generic string helpers (used by login screen etc.)
   static Future<void> setString(String key, String value) async =>

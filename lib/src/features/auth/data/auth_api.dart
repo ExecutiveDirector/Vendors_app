@@ -204,6 +204,7 @@ class VendorAuthApi {
       'message': rawData['message'] ?? 'Success',
       'data': {
         'token': token,
+        'refreshToken': rawData['refreshToken'],
         'user': user,
         'role': rawData['role'],
         'redirect': rawData['redirect'],
