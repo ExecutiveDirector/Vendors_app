@@ -9,6 +9,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../config.dart';
 import '../services/local_storage.dart';
+import 'session_manager.dart';
 import '../navigation/app_navigator_key.dart';
 
 class ApiClient {
@@ -34,22 +35,37 @@ class ApiClient {
         },
       ),
 
-      // ── 401 handling ──────────────────────────────────────────────────────
-      // NOTE: this is intentionally NOT a silent-refresh-and-retry flow.
-      // There is no /auth/refresh endpoint anywhere in this codebase, and
-      // only a single access token is stored (no refresh token) — so there
-      // is nothing to refresh against. Inventing an endpoint here would risk
-      // a confident-looking 404 loop in production. Instead: on 401, clear
-      // the stale session and send the vendor back to login with a clear
-      // reason, rather than the previous behavior (silent failure / a
-      // confusing raw error toast / possible crash deeper in a screen).
-      //
-      // If/when a real refresh endpoint exists, replace the body of
-      // onError below with the refresh-and-retry logic.
+      // ── 401 handling: stay signed in ────────────────────────────────────
+      // A 401 usually just means the short-lived access token ran out. Renew
+      // it with the refresh token and retry the request once, invisibly.
+      // The vendor is sent back to login ONLY when the server rejects the
+      // refresh token itself (signed out elsewhere, password reset, account
+      // disabled) or when there is no refresh token. Being offline, slow or
+      // hitting a 5xx never signs anyone out.
       InterceptorsWrapper(
         onError: (DioException err, handler) async {
-          if (err.response?.statusCode == 401 &&
-              err.requestOptions.path != '/auth/login') {
+          final path = err.requestOptions.path;
+          final isAuthCall =
+              path.contains('/auth/login') || path.contains('/auth/refresh');
+          if (err.response?.statusCode != 401 ||
+              isAuthCall ||
+              err.requestOptions.extra['session_retried'] == true) {
+            return handler.next(err);
+          }
+
+          final outcome = await SessionManager.refresh();
+          if (outcome == RefreshOutcome.renewed) {
+            final token = await LocalStorage.getToken();
+            final opts = err.requestOptions
+              ..headers['Authorization'] = 'Bearer $token'
+              ..extra['session_retried'] = true;
+            try {
+              return handler.resolve(await _dio.fetch(opts));
+            } on DioException catch (retryError) {
+              return handler.next(retryError);
+            }
+          }
+          if (outcome == RefreshOutcome.rejected) {
             await LocalStorage.clearAll();
             navigateTo('/login?reason=session_expired');
           }

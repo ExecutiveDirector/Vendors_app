@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import '../../../core/api/dio_client.dart';
+import '../../../core/services/local_storage.dart';
 
 /// Handles all vendor authentication API interactions.
 class VendorAuthApi {
@@ -150,7 +151,10 @@ class VendorAuthApi {
 
   static Future<void> logout() async {
     try {
-      await ApiClient.dio.post('/auth/logout');
+      // Sending the refresh token ends this device's long-lived session too.
+      final refreshToken = await LocalStorage.getRefreshToken();
+      await ApiClient.dio.post('/auth/logout',
+          data: {if (refreshToken != null) 'refreshToken': refreshToken});
     } catch (_) {}
   }
 
@@ -204,6 +208,7 @@ class VendorAuthApi {
       'message': rawData['message'] ?? 'Success',
       'data': {
         'token': token,
+        'refreshToken': rawData['refreshToken'],
         'user': user,
         'role': rawData['role'],
         'redirect': rawData['redirect'],
