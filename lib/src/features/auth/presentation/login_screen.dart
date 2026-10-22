@@ -528,6 +528,10 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (response['success'] == true && payload != null && token != null) {
         await LocalStorage.setToken(token as String);
+        final refresh = payload['refreshToken'];
+        if (refresh is String && refresh.isNotEmpty) {
+          await LocalStorage.setRefreshToken(refresh);
+        }
         await LocalStorage.setString('user_role', role ?? 'vendor');
 
         // Cache the merged account+roleData profile so Settings can show
