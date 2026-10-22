@@ -357,7 +357,7 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               const SizedBox(width: 8),
               const Text(
-                'Remember me',
+                'Remember my email',
                 style: TextStyle(color: AppColors.muted, fontSize: 14),
               ),
             ],
@@ -528,6 +528,11 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (response['success'] == true && payload != null && token != null) {
         await LocalStorage.setToken(token as String);
+        // Long-lived token that keeps the vendor signed in (renewed silently).
+        final refreshToken = payload['refreshToken'];
+        if (refreshToken is String && refreshToken.isNotEmpty) {
+          await LocalStorage.setRefreshToken(refreshToken);
+        }
         await LocalStorage.setString('user_role', role ?? 'vendor');
 
         // Cache the merged account+roleData profile so Settings can show

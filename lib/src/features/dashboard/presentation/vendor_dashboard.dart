@@ -17,6 +17,7 @@ import '../../../core/services/push_notification_service.dart';
 import '../../../core/services/notification_watcher_service.dart';
 import '../../../core/services/incoming_order_service.dart';
 import '../../../core/widgets/shared_widgets.dart';
+import '../../auth/data/auth_api.dart';
 
 // ── Numeric helpers ──────────────────────────────────────────────────────────
 double _safeDouble(dynamic v) {
@@ -110,6 +111,10 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
     // Must run BEFORE clearAll() — needs the still-present auth token to
     // authenticate the unregister request. Best-effort.
     await PushNotificationService.unregisterToken();
+    // End this device's long-lived session on the server too (best-effort).
+    try {
+      await VendorAuthApi.logout();
+    } catch (_) {}
     NotificationWatcherService.instance.reset();
     IncomingOrderService.instance.reset();
     await LocalStorage.clearAll();

@@ -48,3 +48,8 @@ jobs:
             echo "::error::$line"
           done
           exit $code
+
+      # Native plugins (secure storage, Firebase, ...) only fail at build
+      # time, so compile an Android build on every PR too.
+      - name: Build debug APK
+        run: flutter build apk --debug
