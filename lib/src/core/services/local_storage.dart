@@ -1,20 +1,54 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class LocalStorage {
   static late Box _box;
 
+  // Credentials live in the platform keystore (Android Keystore / iOS Keychain),
+  // not in the plain Hive box.
+  static const FlutterSecureStorage _secure = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+
   static Future<void> init() async {
     _box = await Hive.openBox('vendor_box');
+    // One-time migration for sessions saved by older versions.
+    for (final key in const ['token', 'refresh_token']) {
+      final old = _box.get(key);
+      if (old is String && old.isNotEmpty) {
+        try {
+          if (await _secure.read(key: key) == null) {
+            await _secure.write(key: key, value: old);
+          }
+          await _box.delete(key);
+        } catch (_) {
+          // Keystore unavailable: leave the old value so the vendor stays signed in.
+        }
+      }
+    }
   }
 
   // Token helpers
-  static Future<void> setToken(String v) async => _box.put('token', v);
-  static Future<String?> getToken() async => _box.get('token');
-  static Future<void> setRefreshToken(String v) async =>
-      _box.put('refresh_token', v);
-  static Future<String?> getRefreshToken() async =>
-      _box.get('refresh_token') as String?;
+  static Future<void> setToken(String v) => _secure.write(key: 'token', value: v);
+  static Future<String?> getToken() async {
+    try {
+      return await _secure.read(key: 'token') ?? _box.get('token') as String?;
+    } catch (_) {
+      return _box.get('token') as String?;
+    }
+  }
+
+  static Future<void> setRefreshToken(String v) =>
+      _secure.write(key: 'refresh_token', value: v);
+  static Future<String?> getRefreshToken() async {
+    try {
+      return await _secure.read(key: 'refresh_token') ??
+          _box.get('refresh_token') as String?;
+    } catch (_) {
+      return _box.get('refresh_token') as String?;
+    }
+  }
 
   // Generic string helpers (used by login screen etc.)
   static Future<void> setString(String key, String value) async =>
@@ -58,5 +92,10 @@ class LocalStorage {
   }
 
   // Full clear
-  static Future<void> clearAll() async => _box.clear();
+  static Future<void> clearAll() async {
+    await _box.clear();
+    try {
+      await _secure.deleteAll();
+    } catch (_) {}
+  }
 }

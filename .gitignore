@@ -14,3 +14,9 @@ ios/**/GeneratedPluginRegistrant.*
 .idea/
 *.iml
 .DS_Store
+
+# Signing material: never commit. Inject via CI secrets / local files.
+android/key.properties
+*.jks
+*.keystore
+android/app/keystore/

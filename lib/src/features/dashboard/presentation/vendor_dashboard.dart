@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/services/local_storage.dart';
+import '../../auth/data/auth_api.dart';
 import '../../../core/services/push_notification_service.dart';
 import '../../../core/services/notification_watcher_service.dart';
 import '../../../core/services/incoming_order_service.dart';
@@ -110,6 +111,9 @@ class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
     // Must run BEFORE clearAll() — needs the still-present auth token to
     // authenticate the unregister request. Best-effort.
     await PushNotificationService.unregisterToken();
+    try {
+      await VendorAuthApi.logout();
+    } catch (_) {}
     NotificationWatcherService.instance.reset();
     IncomingOrderService.instance.reset();
     await LocalStorage.clearAll();
