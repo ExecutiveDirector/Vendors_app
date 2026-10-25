@@ -1,8 +1,10 @@
 // lib/src/features/orders/presentation/incoming_order_sheet.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import '../../../core/services/order_alert_sound_service.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../data/order_model.dart';
 import '../data/orders_api.dart';
 import '../../../core/widgets/shared_widgets.dart';
@@ -61,16 +63,48 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
     });
     try {
       await OrdersApi.updateStatus(widget.order.orderId, 'confirmed');
-      if (mounted) Navigator.pop(context, IncomingOrderResult.accepted);
+      _close(IncomingOrderResult.accepted);
     } catch (e) {
-      // Most likely already accepted/cancelled elsewhere.
+      // The request may have succeeded even though the reply failed (slow
+      // network), or someone else handled the order. Ask the server before
+      // telling the vendor it failed, so the sheet never lingers on a done order.
+      if (await _alreadyHandled()) {
+        _close(IncomingOrderResult.accepted);
+        return;
+      }
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = "Couldn't accept this order. It may have changed — check Orders.";
+          _error = _messageFrom(e) ??
+              "Couldn't accept this order. Check your connection and try again.";
         });
       }
     }
+  }
+
+  /// True when the order is no longer waiting for the vendor.
+  Future<bool> _alreadyHandled() async {
+    try {
+      final fresh = await OrdersApi.byId(widget.order.orderId);
+      return !fresh.needsVendorAction;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String? _messageFrom(Object e) {
+    if (e is DioException) {
+      final d = e.response?.data;
+      if (d is Map && d['error'] != null) return d['error'].toString();
+    }
+    return null;
+  }
+
+  void _close(IncomingOrderResult result) {
+    OrderAlertSoundService.instance.stop();
+    PushNotificationService.cancelOrderAlert(widget.order.orderId);
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop(result);
   }
 
   Future<void> _decline() async {
@@ -85,12 +119,16 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
     try {
       await OrdersApi.updateStatus(widget.order.orderId, 'canceled',
           reason: reason);
-      if (mounted) Navigator.pop(context, IncomingOrderResult.declined);
+      _close(IncomingOrderResult.declined);
     } catch (e) {
+      if (await _alreadyHandled()) {
+        _close(IncomingOrderResult.declined);
+        return;
+      }
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = "Couldn't decline this order. Check Orders.";
+          _error = _messageFrom(e) ?? "Couldn't decline this order. Check Orders.";
         });
       }
     }
