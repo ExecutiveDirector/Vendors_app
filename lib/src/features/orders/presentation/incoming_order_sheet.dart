@@ -1,5 +1,6 @@
 // lib/src/features/orders/presentation/incoming_order_sheet.dart
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/services/order_alert_sound_service.dart';
@@ -53,6 +54,32 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
     return '$m min ago';
   }
 
+  /// True when the server no longer lists this order as waiting for the vendor
+  /// (accepted/declined from elsewhere, or our own request succeeded but the
+  /// response was lost) — the sheet must go away rather than stay stuck.
+  Future<bool> _alreadyHandled() async {
+    try {
+      final fresh = await OrdersApi.byId(widget.order.orderId)
+          .timeout(const Duration(seconds: 10));
+      return fresh.orderStatus.toLowerCase() != 'pending';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String _messageFor(Object e, String fallback) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map && data['error'] != null) return data['error'].toString();
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return 'Slow or no connection. Check your internet and try again.';
+      }
+    }
+    return fallback;
+  }
+
   Future<void> _accept() async {
     OrderAlertSoundService.instance.stop();
     setState(() {
@@ -60,14 +87,20 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
       _error = null;
     });
     try {
-      await OrdersApi.updateStatus(widget.order.orderId, 'confirmed');
+      await OrdersApi.updateStatus(widget.order.orderId, 'confirmed')
+          .timeout(const Duration(seconds: 25));
       if (mounted) Navigator.pop(context, IncomingOrderResult.accepted);
     } catch (e) {
-      // Most likely already accepted/cancelled elsewhere.
+      // The request may have gone through even though the answer didn't come
+      // back: if the order is no longer pending, close the sheet.
+      if (await _alreadyHandled()) {
+        if (mounted) Navigator.pop(context, IncomingOrderResult.accepted);
+        return;
+      }
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = "Couldn't accept this order. It may have changed — check Orders.";
+          _error = _messageFor(e, "Couldn't accept this order. It may have changed — check Orders.");
         });
       }
     }
@@ -84,13 +117,18 @@ class _IncomingOrderSheetState extends State<IncomingOrderSheet> {
     });
     try {
       await OrdersApi.updateStatus(widget.order.orderId, 'canceled',
-          reason: reason);
+              reason: reason)
+          .timeout(const Duration(seconds: 25));
       if (mounted) Navigator.pop(context, IncomingOrderResult.declined);
     } catch (e) {
+      if (await _alreadyHandled()) {
+        if (mounted) Navigator.pop(context, IncomingOrderResult.declined);
+        return;
+      }
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = "Couldn't decline this order. Check Orders.";
+          _error = _messageFor(e, "Couldn't decline this order. Check Orders.");
         });
       }
     }
