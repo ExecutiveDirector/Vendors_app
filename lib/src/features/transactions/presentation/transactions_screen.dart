@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/widgets/shared_widgets.dart';
 import '../data/transactions_api.dart';
+import 'withdraw_screen.dart';
 import '../../../core/theme.dart';
 
 class TransactionsScreen extends StatefulWidget {
@@ -118,6 +119,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         leading: const AppBackButton(),
         title: const Text('Transactions'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            tooltip: 'Withdraw earnings',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const WithdrawScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _load,
