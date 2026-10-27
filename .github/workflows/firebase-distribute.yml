@@ -33,7 +33,7 @@ jobs:
         continue-on-error: true   # set to false once you're confident in your test suite
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }}
 
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
