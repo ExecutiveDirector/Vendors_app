@@ -32,6 +32,11 @@ dependencies:
   app_settings: ^5.1.1
   audioplayers: ^6.1.0
 
+# package_info_plus (pulled in by sentry_flutter) newer than this needs a newer
+# Kotlin toolchain than the Android build uses; 8.0.2 compiles with it.
+dependency_overrides:
+  package_info_plus: 8.0.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
