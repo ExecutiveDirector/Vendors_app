@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'src/core/bootstrap.dart';
 import 'src/core/theme.dart';
 import 'src/core/services/push_notification_service.dart';
@@ -22,23 +23,42 @@ Future<void> main() async {
   );
   await PushNotificationService.init();
 
-  // ── Global error visibility ─────────────────────────────────────────────
-  // Without this, uncaught framework errors and uncaught async errors
-  // outside the widget tree are either silently swallowed in release mode
-  // or just crash with no record anywhere visible after the fact.
-  //
-  // This currently only logs to console. Since the Firebase project
-  // already exists (used for FCM above), the natural next step is Firebase
-  // Crashlytics — add `firebase_crashlytics` to pubspec.yaml, then replace
-  // the two debugPrint calls below with
-  // FirebaseCrashlytics.instance.recordFlutterFatalError(details) and
-  // FirebaseCrashlytics.instance.recordError(error, stack, fatal: true).
+  // ── Crash and error reporting ───────────────────────────────────────────
+  // Sentry hooks FlutterError.onError / PlatformDispatcher.onError itself;
+  // we then chain our console logging on top of those handlers so nothing
+  // is lost. Never sends personal data, screenshots or performance traces.
+  // A Sentry DSN only lets clients send events (it is not a secret); a build
+  // can override it with --dart-define=SENTRY_DSN=....
+  try {
+    await SentryFlutter.init((o) {
+      const fromBuild = String.fromEnvironment('SENTRY_DSN');
+      o.dsn = fromBuild.isNotEmpty
+          ? fromBuild
+          : 'https://140b851a0b9901e6a9674273921fa5e5@o4512316675588096.ingest.de.sentry.io/4512317082566736';
+      o.environment =
+          const String.fromEnvironment('APP_ENV', defaultValue: 'production');
+      o.sendDefaultPii = false;
+      o.attachScreenshot = false;
+      o.tracesSampleRate = 0;
+    });
+    Sentry.configureScope((scope) => scope.setTag('app', 'vendor'));
+  } catch (e) {
+    debugPrint('[Sentry] Init failed (non-fatal): $e');
+  }
+
+  final sentryFlutterHandler = FlutterError.onError;
   FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
     debugPrint('🔴 Uncaught Flutter error: ${details.exceptionAsString()}');
+    if (sentryFlutterHandler != null) {
+      sentryFlutterHandler(details);
+    } else {
+      FlutterError.presentError(details);
+    }
   };
+  final sentryAsyncHandler = PlatformDispatcher.instance.onError;
   PlatformDispatcher.instance.onError = (error, stack) {
     debugPrint('🔴 Uncaught async error: $error\n$stack');
+    sentryAsyncHandler?.call(error, stack);
     return true;
   };
 
