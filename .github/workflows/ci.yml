@@ -52,4 +52,12 @@ jobs:
       # Native plugins (secure storage, Firebase, ...) only fail at build
       # time, so compile an Android build on every PR too.
       - name: Build debug APK
-        run: flutter build apk --debug
+        run: |
+          set +e
+          flutter build apk --debug 2>&1 | tee build.log
+          code=${PIPESTATUS[0]}
+          if [ $code -ne 0 ]; then
+            grep -m1 -A12 "What went wrong" build.log | tr '\n' ' ' | cut -c1-900 | while read -r l; do echo "::error::$l"; done
+            grep -m4 -i "error:" build.log | while read -r l; do echo "::error::$l"; done
+          fi
+          exit $code
